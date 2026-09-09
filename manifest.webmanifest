@@ -1,0 +1,17 @@
+{
+  "name": "Visitas de Obra",
+  "short_name": "Visitas",
+  "description": "Registro de visitas de obra con datos de obra, agentes, notas, fotos y dictado por voz. Exporta actas e informes en PDF y Word.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF3F9",
+  "theme_color": "#123B63",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

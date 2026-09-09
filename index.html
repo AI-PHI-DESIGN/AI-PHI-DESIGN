@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visitas de Obra</title>
+<meta name="description" content="Registro de visitas de obra: datos de obra, agentes, notas, fotos, dictado por voz y exportación a PDF y Word.">
+<meta name="theme-color" content="#123B63">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Visitas">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#EEF3F9; --bg-2:#E2EBF5; --card:#FFFFFF; --ink:#14324F; --ink-2:#4D6784; --ink-3:#7D93AB;
+  --navy:#123B63; --navy-2:#0D2E4F; --blue:#2F6FAB; --sky:#8FBCE6; --sky-2:#C9DEF3; --line:#D3DFEC;
+  --green:#3FA55B; --red:#D9534F; --amber:#E0A32B; --on-navy:#FFFFFF;
+  --shadow:0 2px 10px rgba(18,59,99,.10), 0 1px 2px rgba(18,59,99,.06);
+  --radius:22px; --radius-s:14px;
+  --font:"Fira Sans",-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A27; --bg-2:#132436; --card:#182A3D; --ink:#E8F0F8; --ink-2:#A9BCD0; --ink-3:#7E93A9;
+    --navy:#2F6FAB; --navy-2:#255C90; --blue:#6FA6DC; --sky:#4B7EB0; --sky-2:#243B55; --line:#2A3F57;
+    --shadow:0 2px 10px rgba(0,0,0,.35); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A27; --bg-2:#132436; --card:#182A3D; --ink:#E8F0F8; --ink-2:#A9BCD0; --ink-3:#7E93A9;
+  --navy:#2F6FAB; --navy-2:#255C90; --blue:#6FA6DC; --sky:#4B7EB0; --sky-2:#243B55; --line:#2A3F57;
+  --shadow:0 2px 10px rgba(0,0,0,.35); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.35;-webkit-text-size-adjust:100%}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+img{max-width:100%;display:block}
+#app{min-height:100dvh;display:flex;flex-direction:column;max-width:680px;margin:0 auto;background:var(--bg);position:relative}
+@media (min-width:700px){#app{min-height:100vh;box-shadow:0 0 0 1px var(--line)}}
+
+/* ---------- Top bar ---------- */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:6px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;background:var(--bg);border-bottom:1px solid var(--line);min-height:64px}
+.topbar .ib{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--navy);flex:none}
+.topbar .ib:active{background:var(--bg-2)}
+.topbar .ib svg{width:26px;height:26px}
+.topbar .ttl{flex:1;min-width:0}
+.topbar .ttl h1{margin:0;font-size:22px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.topbar .ttl .sub{font-size:14px;color:var(--ink-2);margin-top:1px}
+.topbar .ttl .sub button{color:var(--ink-2);text-decoration:underline dotted;text-underline-offset:3px}
+.brand{display:flex;flex-direction:column;align-items:center;line-height:1;padding:0 6px;color:var(--navy)}
+.brand svg{width:46px;height:22px;display:block}
+.brand b{font-weight:700;font-size:20px;letter-spacing:.06em;margin-top:-6px}
+.brand.lg svg{width:120px;height:56px}
+.brand.lg b{font-size:52px;margin-top:-12px}
+
+/* ---------- Layout ---------- */
+.page{flex:1;display:flex;flex-direction:column}
+.content{flex:1;padding:16px 16px 120px}
+.content.tight{padding-bottom:180px}
+h2.sec{font-size:22px;font-weight:700;color:var(--navy);margin:8px 0 14px}
+.sec-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:22px 0 12px}
+.sec-row h2{margin:0}
+.sec-row .lnk{color:var(--ink-2);font-size:14px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:14px}
+.card.tap{width:100%;text-align:left;display:block}
+.card.tap:active{transform:scale(.99)}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card .t{font-size:21px;font-weight:600;color:var(--navy);margin:0;line-height:1.25}
+.card .s{font-size:17px;color:var(--ink-2);margin-top:8px}
+.card .s.small{font-size:15px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;background:var(--card);box-shadow:var(--shadow);font-size:15px;color:var(--ink);white-space:nowrap;flex:none}
+.pill i{width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block}
+.pill.cerrada i{background:var(--ink-3)}
+.empty{text-align:center;color:var(--ink-2);padding:40px 20px}
+.empty h3{color:var(--navy);font-size:22px;margin:16px 0 8px;font-weight:600;text-wrap:balance}
+.empty p{margin:0;font-size:17px}
+.empty svg{width:min(70vw,300px);height:auto;margin:0 auto}
+
+/* ---------- Bottom actions ---------- */
+.bottom{position:fixed;left:0;right:0;bottom:0;z-index:15;pointer-events:none}
+.bottom .in{max-width:680px;margin:0 auto;padding:10px 16px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;pointer-events:auto;background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border-radius:999px;background:var(--navy);color:var(--on-navy);font-size:20px;font-weight:600;letter-spacing:.02em;box-shadow:0 4px 14px rgba(18,59,99,.25)}
+.btn:active{background:var(--navy-2)}
+.btn.up{text-transform:uppercase}
+.btn.ghost{background:var(--card);color:var(--navy);box-shadow:var(--shadow);font-weight:500}
+.btn.danger{background:var(--red)}
+.btn[disabled]{opacity:.5}
+.tools{display:flex;gap:12px}
+.tools .tool{flex:1;height:60px;border-radius:999px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--navy)}
+.tools .tool svg{width:28px;height:28px}
+.tools .tool:active{background:var(--sky-2)}
+.tools .tool.rec{background:var(--red);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,83,79,.5)}50%{box-shadow:0 0 0 12px rgba(217,83,79,0)}}
+@media (prefers-reduced-motion:reduce){.tools .tool.rec{animation:none}}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:18px}
+.field label,.lbl{display:block;font-size:17px;color:var(--ink);margin:0 0 8px 2px}
+.inp{width:100%;min-height:56px;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:0 20px;font-size:18px;color:var(--ink)}
+.inp:focus{border-color:var(--blue)}
+textarea.inp{border-radius:var(--radius);padding:14px 18px;min-height:90px;resize:vertical;line-height:1.4}
+.inp::placeholder{color:var(--ink-3)}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{flex:1;min-height:56px;font-size:18px;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px}
+.seg button svg{width:22px;height:22px;flex:none}
+.seg button.on{background:var(--green);color:#fff}
+.seg button.on.off{background:var(--ink-3)}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chip{min-height:54px;border-radius:999px;border:1.5px solid var(--navy);background:var(--card);color:var(--navy);font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;text-align:center;line-height:1.15}
+.chip.on{background:var(--navy);color:var(--on-navy)}
+.chip svg{width:20px;height:20px;flex:none}
+.agent{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin-top:14px}
+.agent .ah{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.agent .ah b{font-size:17px;color:var(--navy)}
+.agent .ah input{font-weight:600;color:var(--navy);border:0;border-bottom:1.5px dashed var(--line);background:none;font-size:17px;padding:4px 0;flex:1;min-width:0}
+.agent .grid{display:grid;gap:10px}
+.agent .inp{min-height:48px;font-size:16px;border-radius:14px;padding:0 14px}
+.agent .x{color:var(--red);width:36px;height:36px;display:grid;place-items:center;border-radius:10px}
+.agent .x svg{width:20px;height:20px}
+.hint{font-size:14px;color:var(--ink-3);margin:6px 2px 0}
+
+/* ---------- Visit blocks ---------- */
+.bloque{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px 14px;margin-bottom:14px}
+.bh{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--ink-2);font-size:14px}
+.bh .k{display:flex;align-items:center;gap:6px;flex:1;font-weight:500}
+.bh .k svg{width:18px;height:18px}
+.bh .acts{display:flex;gap:2px}
+.bh .acts button{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--ink-2)}
+.bh .acts button:active{background:var(--bg-2)}
+.bh .acts button svg{width:20px;height:20px}
+.bh .acts button.del{color:var(--red)}
+.bloque textarea{width:100%;border:0;background:transparent;resize:none;font-size:17px;line-height:1.45;padding:4px 2px;min-height:44px;overflow:hidden;color:var(--ink)}
+.bloque textarea::placeholder{color:var(--ink-3)}
+.bloque .ph{border-radius:var(--radius-s);overflow:hidden;background:var(--bg-2);margin-bottom:8px}
+.bloque .ph img{width:100%;max-height:60vh;object-fit:contain;margin:0 auto}
+.bloque .cm{border-top:1px dashed var(--line);padding-top:6px}
+.bloque .cm textarea{font-size:16px;min-height:38px}
+.recbar{position:fixed;left:0;right:0;bottom:0;z-index:30;pointer-events:none}
+.recbar .in{max-width:680px;margin:0 auto;pointer-events:auto;background:var(--card);border-top:1px solid var(--line);padding:14px 16px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(0,0,0,.12)}
+.recbar .st{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--red);margin-bottom:6px}
+.recbar .st i{width:12px;height:12px;border-radius:50%;background:var(--red);animation:pulse 1.2s infinite}
+.recbar .interim{color:var(--ink-2);min-height:22px;font-size:16px}
+.recbar .btn{margin-top:10px;min-height:50px;font-size:18px}
+
+/* ---------- Drawer / sheets ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(10,25,40,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.backdrop.left{align-items:stretch;justify-content:flex-start}
+.drawer{width:min(78vw,340px);background:var(--bg);height:100%;display:flex;flex-direction:column;box-shadow:8px 0 30px rgba(0,0,0,.25)}
+.drawer .hero{background:var(--sky-2);padding:calc(48px + env(safe-area-inset-top)) 20px 44px;display:grid;place-items:center}
+.drawer nav{display:flex;flex-direction:column;padding:26px 8px}
+.drawer nav button{display:flex;align-items:center;gap:22px;padding:20px 22px;font-size:20px;font-weight:500;color:var(--navy);text-align:left;border-radius:14px}
+.drawer nav button:active{background:var(--bg-2)}
+.drawer nav svg{width:28px;height:28px;flex:none}
+.drawer .ver{margin-top:auto;text-align:center;color:var(--ink-3);padding:20px;font-size:15px}
+.sheet{width:100%;max-width:680px;background:var(--bg);border-radius:26px 26px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));max-height:88dvh;overflow:auto}
+.sheet .grip{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+.sheet h3{margin:4px 4px 14px;font-size:20px;color:var(--navy);font-weight:600}
+.sheet .opt{display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--card);border-radius:18px;padding:16px 18px;margin-bottom:10px;box-shadow:var(--shadow);font-size:18px;color:var(--ink)}
+.sheet .opt svg{width:26px;height:26px;color:var(--navy);flex:none}
+.sheet .opt small{display:block;font-size:14px;color:var(--ink-2);margin-top:2px}
+.sheet .opt.danger,.sheet .opt.danger svg{color:var(--red)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:16px}
+.kv dt{color:var(--ink-2)}
+.kv dd{margin:0;font-weight:500}
+.toast{position:fixed;left:50%;bottom:calc(110px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;font-size:15px;z-index:60;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+.search{padding:0 16px 8px}
+.logo-prev{width:160px;height:80px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;background:var(--card);overflow:hidden;margin-bottom:8px}
+.logo-prev img{max-height:76px;max-width:156px;object-fit:contain}
+.row{display:flex;gap:10px;align-items:center}
+.row .btn{min-height:48px;font-size:16px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+<script>
+'use strict';
+/* =====================================================================
+   VISITAS DE OBRA · aplicación de una sola página, sin dependencias.
+   Secciones: utilidades · almacenamiento · estado y navegación · pantallas
+   · editor de visita · fotos · voz · exportación (PDF, DOCX, ZIP) · entrega
+   ===================================================================== */
+
+/* ---------- utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+function fmtDate(iso, long) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString('es-ES', long ? { day: 'numeric', month: 'long', year: 'numeric' } : { day: '2-digit', month: 'short', year: 'numeric' }).replace('.', '');
+}
+let toastT; function toast(msg) { let t = $('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); } t.textContent = msg; clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 2600); }
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* ---------- iconos ---------- */
+const I = {
+  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/><path d="M10 11v6M14 11v6"/></svg>',
+  pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v6"/><path d="M14 3v5h5"/><path d="M19 8v3"/><text x="3" y="21" font-size="8.5" font-weight="700" fill="currentColor" stroke="none" font-family="Arial,sans-serif">PDF</text></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/></svg>',
+  text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 11h14M5 15h14M5 19h9"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 14 6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 10 6 6 6-6"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
+  checkc: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="m7.5 12.5 3 3 6-7" fill="none" stroke="#123B63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  word: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v6"/><path d="M14 3v5h5"/><path d="M19 8v3"/><text x="2" y="21" font-size="8" font-weight="700" fill="currentColor" stroke="none" font-family="Arial,sans-serif">DOCX</text></svg>',
+  save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12l4 4v12H4z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m-5 5 5-5 5 5"/><path d="M4 20h16"/></svg>',
+  building: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V5l8-3v19M12 9l8 3v9M4 21h16"/><path d="M8 8h1M8 12h1M8 16h1M16 16h1"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m-5-8 5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>',
+  arc: '<svg viewBox="0 0 120 56" fill="none" stroke="#8FBCE6" stroke-width="7" stroke-linecap="round"><path d="M8 54C14 26 36 8 60 8s46 18 52 46"/></svg>'
+};
+const brand = (lg) => `<div class="brand${lg ? ' lg' : ''}">${I.arc}<b>VISITA</b></div>`;
+const emptyIllu = `<svg viewBox="0 0 300 200" fill="none" aria-hidden="true"><ellipse cx="150" cy="120" rx="120" ry="70" fill="#C9DEF3"/><rect x="112" y="30" width="76" height="140" rx="12" fill="#123B63"/><rect x="118" y="38" width="64" height="124" rx="8" fill="#FFFFFF"/><rect x="126" y="50" width="48" height="14" rx="4" fill="#8FBCE6"/><rect x="126" y="70" width="48" height="14" rx="4" fill="#8FBCE6"/><rect x="126" y="92" width="48" height="16" rx="8" fill="#FFFFFF" stroke="#123B63" stroke-width="2"/><text x="150" y="104" font-size="9" font-weight="700" fill="#123B63" text-anchor="middle" font-family="Arial,sans-serif">VISITA</text><rect x="126" y="116" width="34" height="5" rx="2" fill="#C9DEF3"/><rect x="126" y="126" width="26" height="5" rx="2" fill="#C9DEF3"/><circle cx="190" cy="42" r="12" fill="#FFFFFF" stroke="#123B63" stroke-width="2"/><path d="m184 42 4 4 8-8" stroke="#3FA55B" stroke-width="2.5" stroke-linecap="round"/><path d="M40 120h40v40H40zM52 120v-14h16v14" fill="#2F6FAB"/><path d="M48 130h8v8h-8zM64 130h8v8h-8z" fill="#C9DEF3"/><path d="M220 90h18l10 24v26h-40v-26z" fill="#2F6FAB"/><rect x="206" y="140" width="46" height="10" rx="5" fill="#123B63"/><path d="M226 90v-12h22l8 22" stroke="#123B63" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M60 60h48M84 60v40" stroke="#123B63" stroke-width="4" stroke-linecap="round"/><path d="M84 60l-12 10M84 60l12 10" stroke="#123B63" stroke-width="3"/><path d="M40 175h220" stroke="#123B63" stroke-width="3" stroke-linecap="round"/></svg>`;
+
+/* ---------- almacenamiento (IndexedDB con respaldo en localStorage) ---------- */
+const Store = (() => {
+  const hasIDB = typeof indexedDB !== 'undefined';
+  let dbp;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    const r = indexedDB.open('visitas-obra', 1);
+    r.onupgradeneeded = e => { const d = e.target.result; d.createObjectStore('obras', { keyPath: 'id' }); d.createObjectStore('kv'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (store, mode, fn) => { const d = await open(); return new Promise((res, rej) => { const t = d.transaction(store, mode); const q = fn(t.objectStore(store)); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); };
+  const ls = { get: k => { try { return JSON.parse(localStorage.getItem('vo:' + k) || 'null'); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem('vo:' + k, JSON.stringify(v)); } catch { toast('Sin espacio para guardar: reduce fotos'); } } };
+  if (!hasIDB) return {
+    allObras: async () => ls.get('obras') || [],
+    putObra: async o => { const a = (ls.get('obras') || []).filter(x => x.id !== o.id); a.push(o); ls.set('obras', a); },
+    delObra: async id => ls.set('obras', (ls.get('obras') || []).filter(x => x.id !== id)),
+    getKV: async k => ls.get(k), setKV: async (k, v) => ls.set(k, v)
+  };
+  return {
+    allObras: () => tx('obras', 'readonly', s => s.getAll()),
+    putObra: o => tx('obras', 'readwrite', s => s.put(o)),
+    delObra: id => tx('obras', 'readwrite', s => s.delete(id)),
+    getKV: k => tx('kv', 'readonly', s => s.get(k)),
+    setKV: (k, v) => tx('kv', 'readwrite', s => s.put(v, k))
+  };
+})();
+
+/* ---------- estado ---------- */
+const ROLES = ['Promotor', 'Constructor', 'Dirección Facultativa', 'Dir. Ejecución de Obra', 'Coord. Seguridad y Salud'];
+const S = { obras: [], perfil: { nombre: '', empresa: '', telefono: '', email: '', logo: null }, view: { name: 'home' }, sortDesc: true, query: '', draft: null };
+let downloadsNS = null; // capacidad de descarga cuando la página se abre como artefacto de claude.ai
+
+const findObra = id => S.obras.find(o => o.id === id);
+const findVisita = (o, id) => o && o.visitas.find(v => v.id === id);
+const saveObra = async o => { o.updatedAt = Date.now(); await Store.putObra(o); };
+const saveObraDebounced = debounce(o => saveObra(o), 500);
+
+/* ---------- navegación con historial (botón atrás del móvil) ---------- */
+function go(view, replace) { S.view = view; if (replace) history.replaceState(view, ''); else history.pushState(view, ''); render(); }
+window.addEventListener('popstate', e => { closeOverlay(); stopRec(); S.view = e.state || { name: 'home' }; render(); });
+const back = () => history.length > 1 ? history.back() : go({ name: 'home' }, true);
+
+/* ---------- render ---------- */
+function render() {
+  const app = $('#app');
+  const v = S.view;
+  window.scrollTo(0, 0);
+  if (v.name === 'home') app.innerHTML = viewHome();
+  else if (v.name === 'obra') app.innerHTML = viewObra(v.id);
+  else if (v.name === 'obraForm') app.innerHTML = viewObraForm(v.id);
+  else if (v.name === 'visita') app.innerHTML = viewVisita(v.obraId, v.id);
+  else if (v.name === 'perfil') app.innerHTML = viewPerfil();
+  else app.innerHTML = viewHome();
+  app.querySelectorAll('textarea.auto').forEach(autoGrow);
+}
+function topbar({ back: b, title, sub, right = '', brandTop = false }) {
+  return `<header class="topbar">
+    ${b ? `<button class="ib" data-go="back" aria-label="Volver">${I.back}</button>` : `<button class="ib" data-go="menu" aria-label="Menú">${I.menu}</button>`}
+    ${brandTop ? brand() : `<div class="ttl"><h1>${esc(title)}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`}
+    ${brandTop ? '<div class="ttl"></div>' : ''}
+    ${right}
+  </header>`;
+}
+
+/* ---------- pantalla: Mis obras ---------- */
+function viewHome() {
+  const q = S.query.trim().toLowerCase();
+  const list = S.obras.slice().sort((a, b) => b.updatedAt - a.updatedAt).filter(o => !q || (o.nombre + ' ' + o.direccion + ' ' + o.tipo).toLowerCase().includes(q));
+  return topbar({ brandTop: true, right: `<button class="ib" data-act="search" aria-label="Buscar">${I.search}</button>` }) +
+  `<div class="search" ${S.searchOpen ? '' : 'hidden'}><input class="inp" id="q" placeholder="Buscar obra…" value="${esc(S.query)}"></div>
+  <main class="content">
+    <h2 class="sec">Mis obras</h2>
+    ${list.length ? list.map(o => `<button class="card tap" data-go="obra" data-id="${o.id}">
+        <div class="card-h"><h3 class="t">${esc(o.nombre) || 'Sin nombre'}</h3><span class="pill ${o.estado}"><i></i>${o.estado === 'activa' ? 'Activa' : 'Cerrada'}</span></div>
+        <div class="s">${esc(o.direccion) || '&nbsp;'}</div>
+      </button>`).join('') :
+      `<div class="empty">${emptyIllu}<h3>${q ? 'Ninguna obra coincide' : 'Todavía no hay obras'}</h3><p>${q ? 'Prueba con otro nombre o dirección.' : 'Crea tu primera obra con sus datos y agentes para empezar a registrar visitas.'}</p></div>`}
+  </main>
+  <div class="bottom"><div class="in"><button class="btn up" data-go="obraForm">Nueva obra</button></div></div>`;
+}
+
+/* ---------- pantalla: detalle de obra ---------- */
+function viewObra(id) {
+  const o = findObra(id); if (!o) return viewHome();
+  const vis = o.visitas.slice().sort((a, b) => S.sortDesc ? (b.fecha.localeCompare(a.fecha) || b.numero - a.numero) : (a.fecha.localeCompare(b.fecha) || a.numero - b.numero));
+  const ag = o.agentes.filter(a => a.nombre || a.telefono || a.email);
+  return topbar({ back: true, title: o.nombre, right: `<button class="ib" data-go="obraForm" data-id="${o.id}" aria-label="Ajustes de obra">${I.edit}</button>` }) +
+  `<main class="content">
+    <div class="card">
+      <div class="t" style="font-size:19px">${esc(o.direccion) || '<span style="color:var(--ink-3)">Sin dirección</span>'}</div>
+      <div class="card-h" style="margin-top:8px"><div class="s" style="margin:0">${esc(o.tipo) || '&nbsp;'}</div><span class="pill ${o.estado}"><i></i>${o.estado === 'activa' ? 'Activa' : 'Cerrada'}</span></div>
+      ${ag.length ? `<div class="s small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">${ag.map(a => `<div><b style="color:var(--navy)">${esc(a.rol)}:</b> ${esc(a.nombre)}${a.telefono ? ` · <a href="tel:${esc(a.telefono)}" style="color:var(--blue)">${esc(a.telefono)}</a>` : ''}</div>`).join('')}</div>` : ''}
+    </div>
+    <div class="sec-row"><h2 class="sec">Visitas de obra</h2><button class="lnk" data-act="sort">${S.sortDesc ? '↓ Más reciente primero' : '↑ Más antigua primero'}</button></div>
+    ${vis.length ? vis.map(v => `<button class="card tap" data-go="visita" data-id="${v.id}" data-obra="${o.id}">
+        <div class="card-h"><h3 class="t" style="font-size:20px">Visita ${v.numero}</h3><span style="font-size:17px;color:var(--ink-2)">${fmtDate(v.fecha)}</span></div>
+        ${v.bloques.length ? `<div class="s small">${resumenVisita(v)}</div>` : ''}
+      </button>`).join('') : `<div class="empty" style="padding:24px"><p>Aún no hay visitas registradas en esta obra.</p></div>`}
+  </main>
+  <div class="bottom"><div class="in"><button class="btn up" data-act="nuevaVisita" data-id="${o.id}">Nueva visita</button></div></div>`;
+}
+function resumenVisita(v) {
+  const fotos = v.bloques.filter(b => b.tipo === 'foto').length;
+  const txt = v.bloques.find(b => (b.tipo === 'texto' || b.tipo === 'voz') && b.texto && b.texto.trim());
+  const parts = [];
+  if (txt) parts.push(esc(txt.texto.trim().slice(0, 90)) + (txt.texto.trim().length > 90 ? '…' : ''));
+  if (fotos) parts.push(`${fotos} foto${fotos > 1 ? 's' : ''}`);
+  return parts.join(' · ');
+}
+
+/* ---------- pantalla: ajustes de obra (nueva / editar) ---------- */
+function viewObraForm(id) {
+  const o = id ? findObra(id) : null;
+  if (!S.draft || S.draft.id !== (o ? o.id : 'new')) {
+    S.draft = o ? JSON.parse(JSON.stringify(o)) : { id: 'new', nombre: '', direccion: '', tipo: '', estado: 'activa', agentes: ROLES.slice(0, 3).map(r => ({ rol: r, nombre: '', telefono: '', email: '' })), visitas: [] };
+  }
+  const d = S.draft;
+  const has = r => d.agentes.some(a => a.rol === r && !a.custom);
+  const customs = d.agentes.filter(a => a.custom);
+  const agentCard = (a, idx) => `<div class="agent" data-ai="${idx}">
+      <div class="ah">${a.custom ? `<input data-af="rol" value="${esc(a.rol)}" placeholder="Tipo de agente (p. ej. Aparejador)">` : `<b>${esc(a.rol)}</b>`}
+        <button class="x" data-act="rmAgent" data-i="${idx}" aria-label="Quitar agente">${I.x}</button></div>
+      <div class="grid">
+        <input class="inp" data-af="nombre" value="${esc(a.nombre)}" placeholder="Nombre y apellidos / empresa" autocomplete="name">
+        <input class="inp" data-af="telefono" value="${esc(a.telefono)}" placeholder="Teléfono" type="tel" inputmode="tel" autocomplete="tel">
+        <input class="inp" data-af="email" value="${esc(a.email)}" placeholder="Correo electrónico" type="email" inputmode="email" autocomplete="email">
+      </div></div>`;
+  return topbar({ back: true, title: o ? 'Ajustes de obra' : 'Nueva obra', right: o ? `<button class="ib" data-act="delObra" data-id="${o.id}" aria-label="Eliminar obra" style="color:var(--red)">${I.trash}</button>` : '' }) +
+  `<main class="content tight">
+    <div class="field"><label for="f-nombre">Nombre de obra</label><input class="inp" id="f-nombre" data-f="nombre" value="${esc(d.nombre)}" placeholder="Ej. San Jacinto 22 B"></div>
+    <div class="field"><label for="f-dir">Dirección</label><input class="inp" id="f-dir" data-f="direccion" value="${esc(d.direccion)}" placeholder="Calle, número, localidad" autocomplete="street-address"></div>
+    <div class="field"><label for="f-tipo">Tipo</label><input class="inp" id="f-tipo" data-f="tipo" value="${esc(d.tipo)}" placeholder="Vivienda unifamiliar, reforma, apartahotel…" list="tipos"><datalist id="tipos"><option>Vivienda unifamiliar</option><option>Edificio residencial</option><option>Reforma</option><option>Apartahotel</option><option>Local comercial</option><option>Nave industrial</option><option>Urbanización</option></datalist></div>
+    <div class="field"><span class="lbl">Estado</span><div class="seg">
+      <button data-act="estado" data-v="activa" class="${d.estado === 'activa' ? 'on' : ''}">${d.estado === 'activa' ? I.check : ''} Activa</button>
+      <button data-act="estado" data-v="cerrada" class="${d.estado === 'cerrada' ? 'on off' : ''}">${d.estado === 'cerrada' ? I.check : ''} Cerrada</button></div></div>
+    <div class="field"><span class="lbl">Agentes</span>
+      <div class="chips">
+        ${ROLES.map(r => `<button class="chip ${has(r) ? 'on' : ''}" data-act="rol" data-r="${esc(r)}">${has(r) ? I.checkc : ''}<span>${esc(r)}</span></button>`).join('')}
+        <button class="chip ${customs.length ? 'on' : ''}" data-act="rolOtro">${customs.length ? I.checkc : I.plus}<span>Otros${customs.length ? ` (${customs.length})` : ''}</span></button>
+      </div>
+      <p class="hint">Toca un agente para activarlo y rellena su nombre y contacto (teléfono y correo).</p>
+      ${d.agentes.map((a, i) => agentCard(a, i)).join('')}
+    </div>
+  </main>
+  <div class="bottom"><div class="in"><button class="btn up" data-act="saveObra">Guardar</button></div></div>`;
+}
+
+/* ---------- pantalla: editor de visita ---------- */
+function viewVisita(obraId, id) {
+  const o = findObra(obraId); const v = findVisita(o, id); if (!v) return viewObra(obraId);
+  return topbar({ back: true, title: `Visita ${v.numero}`, sub: `<button data-act="fecha" title="Cambiar fecha">${fmtDate(v.fecha)}</button><input type="date" id="fecha-inp" value="${v.fecha}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">`,
+      right: `<button class="ib" data-act="export" aria-label="Exportar">${I.pdf}</button><button class="ib" data-act="infoObra" aria-label="Datos de obra">${I.info}</button>` }) +
+  `<main class="content tight" id="bloques">
+    ${v.bloques.length ? v.bloques.map((b, i) => bloqueHTML(b, i, v.bloques.length)).join('') :
+    `<div class="empty">${emptyIllu}<h3>Organiza tu visita mediante bloques</h3><p>Añade fotos, escribe notas o dicta tus observaciones por voz.</p></div>`}
+  </main>
+  <div class="bottom"><div class="in">
+    <div class="tools">
+      <button class="tool" data-act="addTexto" aria-label="Añadir texto">${I.text}</button>
+      <button class="tool" data-act="addFoto" aria-label="Añadir foto">${I.image}</button>
+      <button class="tool" data-act="addVoz" aria-label="Dictar por voz">${I.mic}</button>
+    </div>
+    <button class="btn" data-act="saveVisita">Guardar en la visita</button>
+  </div></div>
+  <input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
+  <input type="file" id="file-gal" accept="image/*" multiple hidden>`;
+}
+function bloqueHTML(b, i, n) {
+  const acts = `<div class="acts">
+    <button data-act="bUp" data-id="${b.id}" ${i === 0 ? 'disabled style="opacity:.3"' : ''} aria-label="Subir">${I.up}</button>
+    <button data-act="bDown" data-id="${b.id}" ${i === n - 1 ? 'disabled style="opacity:.3"' : ''} aria-label="Bajar">${I.down}</button>
+    <button class="del" data-act="bDel" data-id="${b.id}" aria-label="Eliminar bloque">${I.trash}</button></div>`;
+  if (b.tipo === 'foto') return `<div class="bloque" data-id="${b.id}">
+      <div class="bh"><span class="k">${I.image} Foto</span>${acts}</div>
+      <div class="ph"><img src="${b.src}" alt="Foto de la visita"></div>
+      <div class="cm"><textarea class="auto" data-bf="comentario" placeholder="Comentario sobre la foto…" rows="1">${esc(b.comentario)}</textarea></div></div>`;
+  return `<div class="bloque" data-id="${b.id}">
+      <div class="bh"><span class="k">${b.tipo === 'voz' ? I.mic + ' Dictado por voz' : I.text + ' Texto'}</span>${acts}</div>
+      <textarea class="auto" data-bf="texto" placeholder="${b.tipo === 'voz' ? 'Lo que dictes aparecerá aquí…' : 'Escribe una nota…'}" rows="1">${esc(b.texto)}</textarea></div>`;
+}
+function autoGrow(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+
+/* ---------- pantalla: mi perfil / empresa ---------- */
+function viewPerfil() {
+  const p = S.perfil;
+  return topbar({ back: true, title: 'Mi perfil y empresa' }) +
+  `<main class="content">
+    <p class="hint" style="margin:0 2px 16px;font-size:15px">Estos datos y el logotipo aparecen en el encabezado de los informes exportados.</p>
+    <div class="field"><span class="lbl">Logotipo</span>
+      <div class="logo-prev" id="logo-prev">${p.logo ? `<img src="${p.logo.src}" alt="Logotipo">` : '<span style="color:var(--ink-3);font-size:14px">Sin logotipo</span>'}</div>
+      <div class="row"><button class="btn ghost" data-act="pickLogo">${I.upload} Subir logotipo</button>${p.logo ? `<button class="btn ghost" data-act="rmLogo" style="color:var(--red)">Quitar</button>` : ''}</div>
+      <input type="file" id="file-logo" accept="image/*" hidden></div>
+    <div class="field"><label for="p-emp">Empresa / estudio</label><input class="inp" id="p-emp" data-p="empresa" value="${esc(p.empresa)}" placeholder="Nombre de la empresa"></div>
+    <div class="field"><label for="p-nom">Nombre</label><input class="inp" id="p-nom" data-p="nombre" value="${esc(p.nombre)}" placeholder="Tu nombre" autocomplete="name"></div>
+    <div class="field"><label for="p-tel">Teléfono</label><input class="inp" id="p-tel" data-p="telefono" value="${esc(p.telefono)}" type="tel" inputmode="tel" placeholder="Teléfono de contacto"></div>
+    <div class="field"><label for="p-mail">Correo electrónico</label><input class="inp" id="p-mail" data-p="email" value="${esc(p.email)}" type="email" inputmode="email" placeholder="correo@empresa.com"></div>
+  </main>
+  <div class="bottom"><div class="in"><button class="btn up" data-act="savePerfil">Guardar</button></div></div>`;
+}
+
+/* ---------- capas: menú lateral y hojas ---------- */
+function closeOverlay() { const b = $('.backdrop'); if (b) b.remove(); }
+function overlay(inner, left) {
+  closeOverlay();
+  const b = document.createElement('div'); b.className = 'backdrop' + (left ? ' left' : ''); b.innerHTML = inner;
+  b.addEventListener('click', e => { if (e.target === b) closeOverlay(); });
+  document.body.appendChild(b); return b;
+}
+function openMenu() {
+  overlay(`<aside class="drawer"><div class="hero">${brand(true)}</div><nav>
+    <button data-go="perfil">${I.user}<span>Mi perfil</span></button>
+    <button data-act="backup">${I.save}<span>Copia de seguridad</span></button>
+    <button data-act="restore">${I.upload}<span>Restaurar copia</span></button>
+    <button data-act="acerca">${I.info}<span>Acerca de</span></button></nav>
+    <div class="ver">Visitas de Obra · v1.0</div></aside>`, true);
+}
+function sheet(html) { return overlay(`<div class="sheet"><div class="grip"></div>${html}</div>`); }
+
+/* ---------- acciones (delegación de eventos) ---------- */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-go],[data-act]'); if (!el) return;
+  const goTo = el.dataset.go, act = el.dataset.act;
+  if (goTo) {
+    closeOverlay();
+    if (goTo === 'back') return back();
+    if (goTo === 'menu') return openMenu();
+    if (goTo === 'obra') return go({ name: 'obra', id: el.dataset.id });
+    if (goTo === 'obraForm') { S.draft = null; return go({ name: 'obraForm', id: el.dataset.id || null }); }
+    if (goTo === 'visita') return go({ name: 'visita', obraId: el.dataset.obra, id: el.dataset.id });
+    if (goTo === 'perfil') return go({ name: 'perfil' });
+  }
+  const v = S.view;
+  switch (act) {
+    case 'search': S.searchOpen = !S.searchOpen; if (!S.searchOpen) S.query = ''; render(); if (S.searchOpen) $('#q').focus(); break;
+    case 'sort': S.sortDesc = !S.sortDesc; render(); break;
+    case 'estado': S.draft.estado = el.dataset.v; render(); break;
+    case 'rol': { const r = el.dataset.r; const i = S.draft.agentes.findIndex(a => a.rol === r && !a.custom); if (i >= 0) S.draft.agentes.splice(i, 1); else S.draft.agentes.push({ rol: r, nombre: '', telefono: '', email: '' }); render(); break; }
+    case 'rolOtro': S.draft.agentes.push({ rol: '', nombre: '', telefono: '', email: '', custom: true }); render(); setTimeout(() => { const c = document.querySelectorAll('.agent'); const last = c[c.length - 1]; if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); last.querySelector('input').focus(); } }, 50); break;
+    case 'rmAgent': S.draft.agentes.splice(+el.dataset.i, 1); render(); break;
+    case 'saveObra': await doSaveObra(); break;
+    case 'delObra': confirmSheet('Eliminar esta obra', 'Se borrarán la obra y todas sus visitas y fotos. Esta acción no se puede deshacer.', async () => { await Store.delObra(el.dataset.id); S.obras = S.obras.filter(x => x.id !== el.dataset.id); toast('Obra eliminada'); go({ name: 'home' }, true); }); break;
+    case 'nuevaVisita': { const o = findObra(el.dataset.id); const numero = o.visitas.reduce((m, x) => Math.max(m, x.numero), 0) + 1; const vis = { id: uid(), numero, fecha: todayISO(), bloques: [], createdAt: Date.now() }; o.visitas.push(vis); await saveObra(o); go({ name: 'visita', obraId: o.id, id: vis.id }); break; }
+    case 'fecha': { const inp = $('#fecha-inp'); if (inp.showPicker) { try { inp.showPicker(); } catch { inp.click(); } } else inp.click(); break; }
+    case 'addTexto': addBloque({ tipo: 'texto', texto: '' }); break;
+    case 'addFoto': sheet(`<h3>Añadir foto</h3><button class="opt" data-act="fotoCam">${I.camera}<span>Hacer una foto<small>Abre la cámara del móvil</small></span></button><button class="opt" data-act="fotoGal">${I.image}<span>Elegir de la galería<small>Puedes seleccionar varias</small></span></button>`); break;
+    case 'fotoCam': closeOverlay(); $('#file-cam').click(); break;
+    case 'fotoGal': closeOverlay(); $('#file-gal').click(); break;
+    case 'addVoz': startRec(); break;
+    case 'stopRec': stopRec(); break;
+    case 'bUp': case 'bDown': case 'bDel': bloqueAct(act, el.dataset.id); break;
+    case 'saveVisita': { const o = findObra(v.obraId); await saveObra(o); toast('Visita guardada'); back(); break; }
+    case 'infoObra': { const o = findObra(v.obraId); sheet(`<h3>${esc(o.nombre)}</h3><dl class="kv"><dt>Dirección</dt><dd>${esc(o.direccion) || '—'}</dd><dt>Tipo</dt><dd>${esc(o.tipo) || '—'}</dd><dt>Estado</dt><dd>${o.estado === 'activa' ? 'Activa' : 'Cerrada'}</dd>${o.agentes.map(a => `<dt>${esc(a.rol)}</dt><dd>${esc(a.nombre) || '—'}${a.telefono ? `<br><a href="tel:${esc(a.telefono)}" style="color:var(--blue)">${esc(a.telefono)}</a>` : ''}${a.email ? `<br><a href="mailto:${esc(a.email)}" style="color:var(--blue)">${esc(a.email)}</a>` : ''}</dd>`).join('')}</dl><div style="height:14px"></div><button class="opt" data-go="obraForm" data-id="${o.id}">${I.edit}<span>Editar datos de obra</span></button>`); break; }
+    case 'export': S.docTipo = S.docTipo || 'acta'; sheet(`<h3>Emitir documento</h3>
+        <span class="lbl" style="font-size:15px;color:var(--ink-2)">Tipo de documento</span>
+        <div class="seg" style="margin-bottom:16px">
+          <button data-act="docTipo" data-v="acta" class="${S.docTipo === 'acta' ? 'on' : ''}" style="${S.docTipo === 'acta' ? 'background:var(--navy)' : ''}">${S.docTipo === 'acta' ? I.check : ''} Acta de visita</button>
+          <button data-act="docTipo" data-v="informe" class="${S.docTipo === 'informe' ? 'on' : ''}">${S.docTipo === 'informe' ? I.check : ''} Informe de situación</button></div>
+        <p class="hint" style="margin:0 4px 14px">${S.docTipo === 'acta' ? 'Acta en tonos azules con datos de obra, agentes, fotos, firmas y texto legal.' : 'Informe de situación de obra en tonos verdes, con datos de obra, agentes y contenido de la visita.'}</p>
+        <button class="opt" data-act="expPdf">${I.pdf}<span>Exportar en PDF<small>Encabezado con logotipo, obra, fecha, textos y fotos</small></span></button>
+        <button class="opt" data-act="expDocx">${I.word}<span>Exportar editable en Word (.docx)<small>Mismo contenido, para retocarlo en Word</small></span></button>`); break;
+    case 'docTipo': S.docTipo = el.dataset.v; document.querySelector('[data-act="export"]').click(); break;
+    case 'expPdf': case 'expDocx': { closeOverlay(); const o = findObra(v.obraId), vis = findVisita(o, v.id); await saveObra(o); try { toast('Generando documento…'); const tipo = S.docTipo || 'acta'; const pref = tipo === 'acta' ? 'Acta' : 'Informe'; const base = `${pref} visita ${vis.numero} - ${(o.nombre || 'obra').replace(/[\\/:*?"<>|]+/g, ' ').trim()} - ${vis.fecha}`; if (act === 'expPdf') await deliver(buildPDF(o, vis, S.perfil, tipo), base + '.pdf'); else await deliver(buildDOCX(o, vis, S.perfil, tipo), base + '.docx'); } catch (err) { console.error(err); toast('No se pudo generar el documento: ' + err.message); } break; }
+    case 'pickLogo': $('#file-logo').click(); break;
+    case 'rmLogo': S.perfil.logo = null; await Store.setKV('perfil', S.perfil); render(); break;
+    case 'savePerfil': await Store.setKV('perfil', S.perfil); toast('Perfil guardado'); back(); break;
+    case 'backup': { closeOverlay(); const data = JSON.stringify({ app: 'visitas-obra', version: 1, exportedAt: new Date().toISOString(), perfil: S.perfil, obras: S.obras }); await deliver(new Blob([data], { type: 'application/json' }), `copia-visitas-obra-${todayISO()}.json`); break; }
+    case 'restore': { closeOverlay(); const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'application/json,.json'; inp.onchange = async () => { try { const j = JSON.parse(await inp.files[0].text()); if (!j.obras) throw new Error('Archivo no válido'); for (const o of j.obras) { await Store.putObra(o); const i = S.obras.findIndex(x => x.id === o.id); if (i >= 0) S.obras[i] = o; else S.obras.push(o); } if (j.perfil) { S.perfil = j.perfil; await Store.setKV('perfil', S.perfil); } toast(`Restauradas ${j.obras.length} obras`); render(); } catch (err) { toast('No se pudo restaurar: ' + err.message); } }; inp.click(); break; }
+    case 'acerca': closeOverlay(); sheet(`<h3>Visitas de Obra</h3><p style="margin:0 4px 12px;color:var(--ink-2)">Registro de visitas de obra con datos de obra y agentes, notas, fotos con comentarios y dictado por voz. Exporta cada visita a PDF o Word con el encabezado de la obra y el logotipo de tu empresa.</p><p style="margin:0 4px 12px;color:var(--ink-2)">Los datos se guardan en este dispositivo. Haz copias de seguridad desde el menú para no perderlos.</p>`); break;
+    case 'confirmYes': closeOverlay(); if (pendingConfirm) { const f = pendingConfirm; pendingConfirm = null; await f(); } break;
+    case 'confirmNo': closeOverlay(); pendingConfirm = null; break;
+  }
+});
+let pendingConfirm = null;
+function confirmSheet(title, text, fn) { pendingConfirm = fn; sheet(`<h3>${esc(title)}</h3><p style="margin:0 4px 16px;color:var(--ink-2)">${esc(text)}</p><button class="btn danger" data-act="confirmYes" style="margin-bottom:10px">Sí, eliminar</button><button class="btn ghost" data-act="confirmNo">Cancelar</button>`); }
+
+document.addEventListener('input', e => {
+  const t = e.target; const v = S.view;
+  if (t.id === 'q') { S.query = t.value; const main = $('main'); const tmp = document.createElement('div'); tmp.innerHTML = viewHome(); main.innerHTML = tmp.querySelector('main').innerHTML; return; }
+  if (t.dataset.f && S.draft) { S.draft[t.dataset.f] = t.value; return; }
+  if (t.dataset.af && S.draft) { const idx = +t.closest('.agent').dataset.ai; S.draft.agentes[idx][t.dataset.af] = t.value; return; }
+  if (t.dataset.p) { S.perfil[t.dataset.p] = t.value; return; }
+  if (t.dataset.bf && v.name === 'visita') { const o = findObra(v.obraId), vis = findVisita(o, v.id); const b = vis.bloques.find(x => x.id === t.closest('.bloque').dataset.id); if (b) { b[t.dataset.bf] = t.value; autoGrow(t); saveObraDebounced(o); } }
+});
+document.addEventListener('change', async e => {
+  const t = e.target; const v = S.view;
+  if (t.id === 'fecha-inp' && t.value && v.name === 'visita') { const o = findObra(v.obraId), vis = findVisita(o, v.id); vis.fecha = t.value; await saveObra(o); render(); return; }
+  if ((t.id === 'file-cam' || t.id === 'file-gal') && t.files.length) { await addFotos(Array.from(t.files)); t.value = ''; return; }
+  if (t.id === 'file-logo' && t.files.length) { try { const img = await resizeImage(t.files[0], 600, 0.9, true); S.perfil.logo = img; await Store.setKV('perfil', S.perfil); render(); toast('Logotipo guardado'); } catch (err) { toast('No se pudo leer la imagen'); } t.value = ''; }
+});
+
+async function doSaveObra() {
+  const d = S.draft;
+  if (!d.nombre.trim()) { toast('Pon un nombre a la obra'); $('#f-nombre').focus(); return; }
+  d.agentes = d.agentes.map(a => ({ ...a, rol: (a.rol || 'Otro agente').trim(), nombre: a.nombre.trim(), telefono: a.telefono.trim(), email: a.email.trim() }));
+  const isNew = d.id === 'new';
+  if (isNew) { d.id = uid(); d.createdAt = Date.now(); }
+  await saveObra(d);
+  const i = S.obras.findIndex(x => x.id === d.id); if (i >= 0) S.obras[i] = d; else S.obras.push(d);
+  S.draft = null; toast(isNew ? 'Obra creada' : 'Obra guardada');
+  if (isNew) go({ name: 'obra', id: d.id }, true); else back();
+}
+
+/* ---------- bloques de la visita ---------- */
+function curVisita() { const o = findObra(S.view.obraId); return { o, vis: findVisita(o, S.view.id) }; }
+function addBloque(b, focus = true) {
+  const { o, vis } = curVisita(); b.id = uid(); vis.bloques.push(b); saveObraDebounced(o); render();
+  const el = document.querySelector(`.bloque[data-id="${b.id}"]`);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (focus) { const ta = el.querySelector('textarea'); if (ta && b.tipo !== 'foto') ta.focus(); } }
+  return b;
+}
+function bloqueAct(act, id) {
+  const { o, vis } = curVisita(); const i = vis.bloques.findIndex(b => b.id === id); if (i < 0) return;
+  if (act === 'bDel') { confirmSheet('Eliminar bloque', 'Se eliminará este bloque de la visita.', async () => { vis.bloques.splice(i, 1); await saveObra(o); render(); }); return; }
+  const j = act === 'bUp' ? i - 1 : i + 1; if (j < 0 || j >= vis.bloques.length) return;
+  [vis.bloques[i], vis.bloques[j]] = [vis.bloques[j], vis.bloques[i]]; saveObraDebounced(o); render();
+}
+
+/* ---------- fotos: redimensionado a JPEG ---------- */
+function loadImage(file) { return new Promise((res, rej) => { const url = URL.createObjectURL(file); const img = new Image(); img.onload = () => { URL.revokeObjectURL(url); res(img); }; img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('imagen')); }; img.src = url; }); }
+async function resizeImage(file, max, q, whiteBg) {
+  const img = await loadImage(file);
+  let w = img.naturalWidth, h = img.naturalHeight; const k = Math.min(1, max / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const ctx = c.getContext('2d');
+  if (whiteBg) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+  ctx.drawImage(img, 0, 0, w, h);
+  return { src: c.toDataURL('image/jpeg', q), w, h };
+}
+async function addFotos(files) {
+  toast(files.length > 1 ? `Añadiendo ${files.length} fotos…` : 'Añadiendo foto…');
+  let last = null;
+  for (const f of files) { try { const im = await resizeImage(f, 1600, 0.82, true); last = addBloque({ tipo: 'foto', src: im.src, w: im.w, h: im.h, comentario: '' }, false); } catch { toast('No se pudo leer una imagen'); } }
+  if (last) { const el = document.querySelector(`.bloque[data-id="${last.id}"] textarea`); if (el) el.focus(); }
+}
+
+/* ---------- dictado por voz (Web Speech API) ---------- */
+let rec = null, recBloque = null, recFinal = '';
+function startRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { sheet(`<h3>Dictado no disponible</h3><p style="margin:0 4px 12px;color:var(--ink-2)">Este navegador no permite el dictado directo. Añade un bloque de texto y usa el micrófono del teclado del móvil para dictar.</p><button class="btn" data-act="addTexto">Añadir bloque de texto</button>`); return; }
+  if (rec) return stopRec();
+  const { o, vis } = curVisita();
+  recBloque = addBloque({ tipo: 'voz', texto: '' }, false); recFinal = '';
+  rec = new SR(); rec.lang = 'es-ES'; rec.continuous = true; rec.interimResults = true;
+  const bar = document.createElement('div'); bar.className = 'recbar'; bar.innerHTML = `<div class="in"><div class="st"><i></i> Escuchando… habla con claridad</div><div class="interim" id="interim"></div><button class="btn danger" data-act="stopRec">Parar dictado</button></div>`;
+  document.body.appendChild(bar);
+  const micBtn = document.querySelector('[data-act="addVoz"]'); if (micBtn) micBtn.classList.add('rec');
+  rec.onresult = ev => {
+    let interim = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) { const r = ev.results[i]; if (r.isFinal) recFinal += (recFinal && !/\s$/.test(recFinal) ? ' ' : '') + r[0].transcript.trim(); else interim += r[0].transcript; }
+    const b = vis.bloques.find(x => x.id === recBloque.id); if (b) { b.texto = recFinal; const ta = document.querySelector(`.bloque[data-id="${b.id}"] textarea`); if (ta) { ta.value = recFinal; autoGrow(ta); } saveObraDebounced(o); }
+    const it = $('#interim'); if (it) it.textContent = interim;
+  };
+  rec.onerror = ev => { if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') { toast('Permiso de micrófono denegado. Usa el micrófono del teclado.'); } else if (ev.error !== 'no-speech' && ev.error !== 'aborted') toast('Error de dictado: ' + ev.error); };
+  rec.onend = () => { if (rec) { try { rec.start(); } catch { stopRec(); } } }; // reinicio automático mientras el usuario no pare
+  try { rec.start(); } catch (err) { toast('No se pudo iniciar el dictado'); stopRec(); }
+}
+function stopRec() {
+  if (!rec) return; const r = rec; rec = null; try { r.onend = null; r.stop(); } catch {}
+  const bar = $('.recbar'); if (bar) bar.remove();
+  const micBtn = document.querySelector('[data-act="addVoz"]'); if (micBtn) micBtn.classList.remove('rec');
+  const b = recBloque; recBloque = null;
+  if (b) { const { o, vis } = curVisita(); if (vis) { const bb = vis.bloques.find(x => x.id === b.id); if (bb && !bb.texto.trim()) { vis.bloques = vis.bloques.filter(x => x.id !== b.id); render(); } saveObra(o); } }
+}
+
+/* =====================================================================
+   EXPORTACIÓN · generador PDF mínimo (sin librerías)
+   ===================================================================== */
+const measureCtx = document.createElement('canvas').getContext('2d');
+function textWidth(txt, size, bold) { measureCtx.font = `${bold ? 'bold ' : ''}${size}px Helvetica, Arial, sans-serif`; return measureCtx.measureText(txt).width * 1.03; }
+function wrapText(text, maxW, size, bold) {
+  const out = [];
+  for (const para of String(text || '').replace(/\r/g, '').split('\n')) {
+    const words = para.split(/\s+/).filter(Boolean); if (!words.length) { out.push(''); continue; }
+    let line = '';
+    for (let w of words) {
+      while (textWidth(w, size, bold) > maxW && w.length > 1) { let cut = w.length; while (cut > 1 && textWidth(w.slice(0, cut), size, bold) > maxW) cut--; if (line) { out.push(line); line = ''; } out.push(w.slice(0, cut)); w = w.slice(cut); }
+      const t = line ? line + ' ' + w : w;
+      if (!line || textWidth(t, size, bold) <= maxW) line = t; else { out.push(line); line = w; }
+    }
+    out.push(line);
+  }
+  return out;
+}
+const CP1252 = { '€': 128, '‚': 130, 'ƒ': 131, '„': 132, '…': 133, '†': 134, '‡': 135, 'ˆ': 136, '‰': 137, 'Š': 138, '‹': 139, 'Œ': 140, 'Ž': 142, '‘': 145, '’': 146, '“': 147, '”': 148, '•': 149, '–': 150, '—': 151, '˜': 152, '™': 153, 'š': 154, '›': 155, 'œ': 156, 'ž': 158, 'Ÿ': 159 };
+function pdfStr(s) { let out = ''; for (const ch of String(s)) { let c = ch.codePointAt(0); if (c > 255) c = CP1252[ch] ?? 63; if (c === 40 || c === 41 || c === 92) out += '\\' + ch; else if (c < 32) out += ' '; else out += String.fromCharCode(c); } return out; }
+const b64ToBytes = b64 => { const bin = atob(b64); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+const latin1 = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+const n2 = n => (Math.round(n * 100) / 100).toString();
+
+class MiniPDF {
+  constructor() {
+    this.W = 595.28; this.H = 841.89; this.objects = []; this.pages = []; this.images = new Map();
+    this.catalogId = this.add(null); this.pagesId = this.add(null);
+    this.f1 = this.add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+    this.f2 = this.add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+    this.f3 = this.add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>');
+  }
+  add(o) { this.objects.push(o); return this.objects.length; }
+  newPage() { const p = { ops: [], imgs: new Set() }; this.pages.push(p); this.cur = p; return p; }
+  image(src, w, h) {
+    let e = this.images.get(src);
+    if (!e) { const bytes = b64ToBytes(src.split(',')[1]); const id = this.add({ dict: `<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>`, stream: bytes }); e = { id, name: 'Im' + (this.images.size + 1) }; this.images.set(src, e); }
+    this.cur.imgs.add(e); return e.name;
+  }
+  drawImage(src, w, h, x, y, dw, dh) { const n = this.image(src, w, h); this.cur.ops.push(`q ${n2(dw)} 0 0 ${n2(dh)} ${n2(x)} ${n2(this.H - y - dh)} cm /${n} Do Q`); }
+  text(str, x, y, size, opt = {}) { const f = opt.italic ? 'F3' : opt.bold ? 'F2' : 'F1'; const c = opt.color || '0 0 0'; let xx = x; if (opt.align === 'right') xx = x - textWidth(str, size, opt.bold); else if (opt.align === 'center') xx = x - textWidth(str, size, opt.bold) / 2; this.cur.ops.push(`BT /${f} ${size} Tf ${c} rg ${n2(xx)} ${n2(this.H - y)} Td (${pdfStr(str)}) Tj ET`); }
+  rect(x, y, w, h, fill, stroke, lw = .6) { const o = []; if (fill) o.push(`${fill} rg`); if (stroke) o.push(`${stroke} RG ${lw} w`); o.push(`${n2(x)} ${n2(this.H - y - h)} ${n2(w)} ${n2(h)} re ${fill && stroke ? 'B' : fill ? 'f' : 'S'}`); this.cur.ops.push(o.join(' ')); }
+  line(x1, y1, x2, y2, color = '0 0 0', lw = .6) { this.cur.ops.push(`${color} RG ${lw} w ${n2(x1)} ${n2(this.H - y1)} m ${n2(x2)} ${n2(this.H - y2)} l S`); }
+  build() {
+    const pageIds = [];
+    for (const p of this.pages) {
+      const content = latin1(p.ops.join('\n'));
+      const cId = this.add({ dict: `<< /Length ${content.length} >>`, stream: content });
+      const xo = [...p.imgs].map(e => `/${e.name} ${e.id} 0 R`).join(' ');
+      pageIds.push(this.add(`<< /Type /Page /Parent ${this.pagesId} 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources << /Font << /F1 ${this.f1} 0 R /F2 ${this.f2} 0 R /F3 ${this.f3} 0 R >> ${xo ? `/XObject << ${xo} >>` : ''} >> /Contents ${cId} 0 R >>`));
+    }
+    this.objects[this.pagesId - 1] = `<< /Type /Pages /Kids [${pageIds.map(i => i + ' 0 R').join(' ')}] /Count ${pageIds.length} >>`;
+    this.objects[this.catalogId - 1] = `<< /Type /Catalog /Pages ${this.pagesId} 0 R >>`;
+    const infoId = this.add(`<< /Producer (Visitas de Obra) /Creator (Visitas de Obra) /CreationDate (D:${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14)}) >>`);
+    const chunks = [latin1('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')]; let offset = chunks[0].length; const offsets = [];
+    this.objects.forEach((o, i) => {
+      offsets.push(offset);
+      const head = latin1(`${i + 1} 0 obj\n`); chunks.push(head); offset += head.length;
+      if (typeof o === 'string') { const b = latin1(o + '\nendobj\n'); chunks.push(b); offset += b.length; }
+      else { const d = latin1(o.dict + '\nstream\n'); chunks.push(d, o.stream); const e = latin1('\nendstream\nendobj\n'); chunks.push(e); offset += d.length + o.stream.length + e.length; }
+    });
+    const xref = `xref\n0 ${this.objects.length + 1}\n0000000000 65535 f \n` + offsets.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size ${this.objects.length + 1} /Root ${this.catalogId} 0 R /Info ${infoId} 0 R >>\nstartxref\n${offset}\n%%EOF\n`;
+    chunks.push(latin1(xref));
+    return new Blob(chunks, { type: 'application/pdf' });
+  }
+}
+
+const DOC_TIPOS = {
+  acta: { titulo: 'ACTA DE VISITA', accent: '0.07 0.23 0.39', accent2: '0.18 0.44 0.67', light: '0.79 0.87 0.95', bg: '0.93 0.95 0.98', hex: '123B63', hex2: '2F6FAB', hexLight: '8FBCE6', hexBg: 'EEF3F9', firmas: true,
+    legal: 'La presente acta recoge las indicaciones y observaciones realizadas por la Dirección Facultativa durante el seguimiento de la obra y es de aplicación a los agentes intervinientes en la misma. Su contenido deja constancia del estado de los trabajos en la fecha indicada y podrá utilizarse como documento técnico acreditativo. Las incidencias o deficiencias señaladas deberán subsanarse en los plazos acordados o, en su defecto, en un plazo razonable según la naturaleza de los trabajos. La recepción del acta implica conocimiento y conformidad con su contenido, salvo alegación expresa por los cauces oportunos.' },
+  informe: { titulo: 'INFORME DE SITUACIÓN DE OBRA', accent: '0.11 0.40 0.25', accent2: '0.25 0.60 0.38', light: '0.76 0.89 0.79', bg: '0.93 0.97 0.94', hex: '1C6640', hex2: '3F9A61', hexLight: 'C2E3C9', hexBg: 'EDF7EF', firmas: false,
+    legal: 'El presente informe describe la situación de los trabajos en la fecha indicada, según lo observado durante la visita de obra, y se emite a efectos informativos para la propiedad y los agentes intervinientes. Las fotografías y anotaciones reflejan el estado de la obra en el momento de la visita.' }
+};
+const C = { ink: '0.08 0.2 0.31', grey: '0.36 0.45 0.55', line: '0.83 0.87 0.93', white: '1 1 1' };
+function buildPDF(o, vis, perfil, tipo = 'acta') {
+  const T = DOC_TIPOS[tipo] || DOC_TIPOS.acta;
+  const pdf = new MiniPDF(); const M = 42, W = pdf.W - 2 * M, BOTTOM = pdf.H - 50; let y = 0;
+  const titulo = `${T.titulo.charAt(0) + T.titulo.slice(1).toLowerCase()} ${vis.numero} · ${fmtDate(vis.fecha)}`;
+  const newPage = () => { pdf.newPage(); y = M; if (pdf.pages.length > 1) { pdf.text(o.nombre, M, y + 4, 9, { color: C.grey }); pdf.text(titulo, M + W, y + 4, 9, { color: C.grey, align: 'right' }); pdf.line(M, y + 10, M + W, y + 10, C.line); y += 24; } };
+  const ensure = h => { if (y + h > BOTTOM) newPage(); };
+  const para = (txt, size, opt = {}, maxW = W, x = M) => { const lh = size * 1.38; for (const ln of wrapText(txt, maxW, size, opt.bold)) { ensure(lh); pdf.text(ln, x, y + size, size, opt); y += lh; } };
+  const seccion = t => { ensure(40); pdf.text(t, M, y + 9, 8.5, { bold: true, color: T.accent2 }); y += 14; pdf.line(M, y, M + W, y, T.light, 1); y += 8; };
+  newPage();
+  // — Encabezado: logotipo a la izquierda · título, fecha, obra y dirección a la derecha (como en ACTA)
+  if (perfil.logo) { const k = Math.min(140 / perfil.logo.w, 52 / perfil.logo.h); pdf.drawImage(perfil.logo.src, perfil.logo.w, perfil.logo.h, M, y, perfil.logo.w * k, perfil.logo.h * k); }
+  else { pdf.rect(M, y, 7, 46, T.accent); pdf.text('VISITA', M + 15, y + 20, 17, { bold: true, color: T.accent }); pdf.text('DE OBRA', M + 15, y + 37, 11, { color: T.accent2 }); }
+  let ly = y + 60; const lc = [perfil.empresa && { t: perfil.empresa, b: true }, perfil.nombre && { t: perfil.nombre }, [perfil.telefono, perfil.email].filter(Boolean).join('  ·  ') && { t: [perfil.telefono, perfil.email].filter(Boolean).join('  ·  ') }].filter(Boolean);
+  lc.forEach(l => { pdf.text(l.t, M, ly, 8.5, { bold: !!l.b, color: l.b ? T.accent : C.grey }); ly += 11; });
+  const rx = M + W; let ry = y + 14;
+  pdf.text(`${T.titulo} ${vis.numero}`, rx, ry, 15, { bold: true, color: T.accent, align: 'right' }); ry += 17;
+  pdf.text(fmtDate(vis.fecha, true), rx, ry, 10.5, { color: C.grey, align: 'right' }); ry += 15;
+  pdf.text(o.nombre, rx, ry, 11, { bold: true, color: C.ink, align: 'right' }); ry += 13;
+  if (o.direccion) { pdf.text(o.direccion, rx, ry, 10, { color: C.ink, align: 'right' }); ry += 13; }
+  if (o.tipo) { pdf.text(o.tipo, rx, ry, 10, { color: C.grey, align: 'right' }); ry += 13; }
+  y = Math.max(ly, ry) + 8; pdf.line(M, y, M + W, y, T.light, 1.2); y += 12;
+  // — Datos de obra
+  const rows = [['Obra', o.nombre], ['Dirección', o.direccion], ['Tipo', o.tipo], ['Estado', o.estado === 'activa' ? 'Activa' : 'Cerrada'], ['Fecha de visita', fmtDate(vis.fecha, true)]].filter(r => r[1]);
+  const rowH = 16; pdf.rect(M, y, W, rows.length * rowH + 12, T.bg, C.line); let yy = y + 8;
+  for (const [k, v] of rows) { pdf.text(k.toUpperCase(), M + 12, yy + 10, 7.5, { bold: true, color: C.grey }); pdf.text(wrapText(v, W - 130, 10, true)[0] || '', M + 105, yy + 10.5, 10, { bold: true, color: T.accent }); yy += rowH; }
+  y += rows.length * rowH + 12 + 14;
+  // — Agentes con contacto
+  const ag = o.agentes.filter(a => a.nombre || a.telefono || a.email);
+  if (ag.length) {
+    seccion('AGENTES INTERVINIENTES');
+    const c1 = M, c2 = M + 135, c3 = M + 315;
+    pdf.text('Agente', c1, y + 9, 8, { bold: true, color: C.grey }); pdf.text('Nombre', c2, y + 9, 8, { bold: true, color: C.grey }); pdf.text('Contacto', c3, y + 9, 8, { bold: true, color: C.grey }); y += 13;
+    for (const a of ag) {
+      const nl = wrapText(a.nombre || '—', 170, 9.5, false), cl = [a.telefono, a.email].filter(Boolean), rl = wrapText(a.rol, 128, 9.5, true);
+      const h = Math.max(nl.length, cl.length || 1, rl.length) * 12 + 4; ensure(h);
+      rl.forEach((l, i) => pdf.text(l, c1, y + 9 + i * 12, 9.5, { bold: true, color: T.accent }));
+      nl.forEach((l, i) => pdf.text(l, c2, y + 9 + i * 12, 9.5, { color: C.ink }));
+      (cl.length ? cl : ['—']).forEach((l, i) => pdf.text(l, c3, y + 9 + i * 12, 9.5, { color: C.ink }));
+      y += h; pdf.line(M, y - 1, M + W, y - 1, C.line, .4);
+    }
+    y += 12;
+  }
+  // — Contenido: textos a ancho completo, fotos en rejilla de dos columnas con separador vertical
+  seccion('CONTENIDO DE LA VISITA');
+  if (!vis.bloques.length) para('Sin anotaciones.', 10.5, { italic: true, color: C.grey });
+  const gap = 22, colW = (W - gap) / 2; let nFoto = 0, i = 0; const bl = vis.bloques;
+  while (i < bl.length) {
+    const b = bl[i];
+    if (b.tipo !== 'foto') {
+      if (b.tipo === 'voz') { ensure(12); pdf.text('Dictado por voz', M, y + 8, 7.5, { color: C.grey }); y += 11; }
+      para(b.texto || '', 10.5, { color: C.ink }); y += 8; i++; continue;
+    }
+    let j = i; while (j < bl.length && bl[j].tipo === 'foto') j++;
+    const grp = bl.slice(i, j);
+    for (let k = 0; k < grp.length; k += 2) {
+      const pair = grp.slice(k, k + 2).map(f => { nFoto++; let dw = colW, dh = colW * f.h / f.w; if (dh > 230) { dh = 230; dw = dh * f.w / f.h; } const cap = wrapText(f.comentario ? `Foto ${nFoto}. ${f.comentario}` : `Foto ${nFoto}`, colW, 8.5, false); return { f, dw, dh, cap, h: dh + 5 + cap.length * 11 }; });
+      const rowHt = Math.max(...pair.map(p => p.h)); ensure(rowHt + 14);
+      pair.forEach((p, c) => { const cx = M + c * (colW + gap); const x = cx + (colW - p.dw) / 2; pdf.rect(x - .5, y - .5, p.dw + 1, p.dh + 1, null, C.line, .4); pdf.drawImage(p.f.src, p.f.w, p.f.h, x, y, p.dw, p.dh); let cy = y + p.dh + 5; for (const l of p.cap) { pdf.text(l, cx + colW / 2, cy + 8, 8.5, { color: C.grey, align: 'center' }); cy += 11; } });
+      pdf.line(M + colW + gap / 2, y - 4, M + colW + gap / 2, y + rowHt + 8, T.light, .8);
+      y += rowHt + 14;
+    }
+    i = j;
+  }
+  // — Firmas (acta) y texto legal
+  const firm = o.agentes.filter(a => a.nombre);
+  if (T.firmas && firm.length) {
+    y += 8; seccion('FIRMAS');
+    const cols = 3, cw = (W - 2 * 16) / cols, bh = 62;
+    for (let k = 0; k < firm.length; k += cols) {
+      ensure(bh + 6);
+      firm.slice(k, k + cols).forEach((a, c) => { const x = M + c * (cw + 16); pdf.text('FIRMA:', x, y + 7, 6.5, { color: C.grey }); pdf.line(x, y + 30, x + cw, y + 30, T.light, 1); pdf.text(wrapText(a.nombre, cw, 9, true)[0], x, y + 42, 9, { bold: true, color: C.ink }); wrapText(a.rol.toUpperCase(), cw, 6.5).slice(0, 2).forEach((l, li) => pdf.text(l, x, y + 52 + li * 8, 6.5, { color: C.grey })); });
+      y += bh + 6;
+    }
+  }
+  y += 10; const legalLines = wrapText(T.legal, W, 7.5); ensure(legalLines.length * 10 + 10); pdf.line(M, y, M + W, y, C.line, .5); y += 8;
+  for (const l of legalLines) { pdf.text(l, M, y + 7.5, 7.5, { color: C.grey }); y += 10; }
+  // — Pie con paginación
+  const n = pdf.pages.length;
+  pdf.pages.forEach((p, k) => { pdf.cur = p; pdf.line(M, pdf.H - 34, M + W, pdf.H - 34, C.line); pdf.text(`${o.nombre} · ${titulo}`, M, pdf.H - 22, 8, { color: C.grey }); pdf.text('Documento generado con Visitas de Obra', M + W / 2, pdf.H - 22, 7, { color: C.grey, align: 'center' }); pdf.text(`Página ${k + 1} de ${n}`, M + W, pdf.H - 22, 8, { color: C.grey, align: 'right' }); });
+  return pdf.build();
+}
+
+/* =====================================================================
+   EXPORTACIÓN · generador DOCX mínimo (ZIP sin compresión + OOXML)
+   ===================================================================== */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(files) { // files: [{name, data: Uint8Array}] · método STORE
+  const enc = new TextEncoder(); const parts = [], central = []; let off = 0;
+  const u16 = n => [n & 255, (n >> 8) & 255], u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+    const lh = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(name.length), ...u16(0), ...name]);
+    central.push(new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(off), ...name]));
+    parts.push(lh, f.data); off += lh.length + sz;
+  }
+  const cdSize = central.reduce((a, c) => a + c.length, 0);
+  const eocd = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(off), ...u16(0)]);
+  return new Blob([...parts, ...central, eocd], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+const xml = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function buildDOCX(o, vis, perfil, tipo = 'acta') {
+  const T = DOC_TIPOS[tipo] || DOC_TIPOS.acta; const NAVY = T.hex, BLUE = T.hex2, GREY = '5B7189';
+  const run = (t, p = {}) => { const lines = String(t ?? '').replace(/\r/g, '').split('\n'); return `<w:r><w:rPr>${p.b ? '<w:b/>' : ''}${p.i ? '<w:i/>' : ''}${p.color ? `<w:color w:val="${p.color}"/>` : ''}<w:sz w:val="${(p.sz || 11) * 2}"/></w:rPr>${lines.map((l, i) => `${i ? '<w:br/>' : ''}<w:t xml:space="preserve">${xml(l)}</w:t>`).join('')}</w:r>`; };
+  const par = (runs, p = {}) => `<w:p><w:pPr>${p.border ? `<w:pBdr><w:bottom w:val="single" w:sz="8" w:space="1" w:color="${T.hexLight}"/></w:pBdr>` : ''}${p.shade ? `<w:shd w:val="clear" w:color="auto" w:fill="${p.shade}"/>` : ''}<w:spacing w:before="${p.before || 0}" w:after="${p.after ?? 120}"/>${p.align ? `<w:jc w:val="${p.align}"/>` : ''}</w:pPr>${runs}</w:p>`;
+  const media = [], rels = []; let rid = 1;
+  const image = (src, w, h, maxCm, maxHcm) => {
+    const bytes = b64ToBytes(src.split(',')[1]); const name = `imagen${media.length + 1}.jpg`; media.push({ name, bytes }); const id = `rId${rid++}`; rels.push({ id, target: `media/${name}` });
+    let cw = maxCm * 360000, ch = cw * h / w; if (maxHcm && ch > maxHcm * 360000) { ch = maxHcm * 360000; cw = ch * w / h; } cw = Math.round(cw); ch = Math.round(ch);
+    return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cw}" cy="${ch}"/><wp:docPr id="${media.length}" name="${name}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${media.length}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cw}" cy="${ch}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+  };
+  const cell = (content, w, opt = {}) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${opt.shade ? `<w:shd w:val="clear" w:color="auto" w:fill="${opt.shade}"/>` : ''}<w:vAlign w:val="center"/></w:tcPr>${content}</w:tc>`;
+  const table = (rows, widths, borders) => `<w:tbl><w:tblPr><w:tblW w:w="${widths.reduce((a, b) => a + b, 0)}" w:type="dxa"/><w:tblBorders>${['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(s => `<w:${s} w:val="${borders ? 'single' : 'nil'}" w:sz="4" w:space="0" w:color="D3DFEC"/>`).join('')}</w:tblBorders><w:tblCellMar><w:top w:w="70" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${widths.map(w => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${rows.map(r => `<w:tr>${r}</w:tr>`).join('')}</w:tbl>`;
+  const body = [];
+  // encabezado: logotipo y empresa a la izquierda · título, fecha, obra y dirección a la derecha
+  const logoRun = perfil.logo ? image(perfil.logo.src, perfil.logo.w, perfil.logo.h, 5, 1.8) : run('VISITA DE OBRA', { b: true, sz: 16, color: NAVY });
+  const empresa = [perfil.empresa && run('\n' + perfil.empresa, { b: true, sz: 9, color: NAVY }), perfil.nombre && run('\n' + perfil.nombre, { sz: 9, color: GREY }), (perfil.telefono || perfil.email) && run('\n' + [perfil.telefono, perfil.email].filter(Boolean).join('  ·  '), { sz: 8.5, color: GREY })].filter(Boolean).join('');
+  const derecha = run(`${T.titulo} ${vis.numero}`, { b: true, sz: 15, color: NAVY }) + run('\n' + fmtDate(vis.fecha, true), { sz: 10.5, color: GREY }) + run('\n' + o.nombre, { b: true, sz: 11 }) + (o.direccion ? run('\n' + o.direccion, { sz: 10 }) : '') + (o.tipo ? run('\n' + o.tipo, { sz: 10, color: GREY }) : '');
+  body.push(table([cell(par(logoRun + empresa, { after: 0 }), 4800) + cell(par(derecha, { align: 'right', after: 0 }), 4838)], [4800, 4838], false));
+  body.push(par(run(' ', { sz: 4 }), { after: 120, border: true }));
+  const datos = [['Obra', o.nombre], ['Dirección', o.direccion], ['Tipo', o.tipo], ['Estado', o.estado === 'activa' ? 'Activa' : 'Cerrada'], ['Fecha de visita', fmtDate(vis.fecha, true)]].filter(r => r[1]);
+  body.push(table(datos.map(([k, v]) => cell(par(run(k.toUpperCase(), { b: true, sz: 8, color: GREY }), { after: 0 }), 2200, { shade: T.hexBg }) + cell(par(run(v, { b: true, sz: 11, color: NAVY }), { after: 0 }), 7438, { shade: T.hexBg })), [2200, 7438], true));
+  const ag = o.agentes.filter(a => a.nombre || a.telefono || a.email);
+  if (ag.length) {
+    body.push(par(run('AGENTES INTERVINIENTES', { b: true, sz: 9, color: BLUE }), { before: 240, after: 60, border: true }));
+    const hd = ['Agente', 'Nombre', 'Contacto'].map((t, i) => cell(par(run(t, { b: true, sz: 8, color: GREY }), { after: 0 }), [2400, 3600, 3638][i])).join('');
+    body.push(table([hd, ...ag.map(a => cell(par(run(a.rol, { b: true, sz: 10, color: NAVY }), { after: 0 }), 2400) + cell(par(run(a.nombre || '—', { sz: 10 }), { after: 0 }), 3600) + cell(par(run([a.telefono, a.email].filter(Boolean).join('\n') || '—', { sz: 10 }), { after: 0 }), 3638))], [2400, 3600, 3638], true));
+  }
+  body.push(par(run('CONTENIDO DE LA VISITA', { b: true, sz: 9, color: BLUE }), { before: 280, after: 120, border: true }));
+  if (!vis.bloques.length) body.push(par(run('Sin anotaciones.', { i: true, color: GREY })));
+  let nFoto = 0, i = 0; const bl = vis.bloques;
+  while (i < bl.length) {
+    const b = bl[i];
+    if (b.tipo !== 'foto') { if (b.tipo === 'voz') body.push(par(run('Dictado por voz', { sz: 8, color: GREY }), { after: 20 })); body.push(par(run(b.texto || '', { sz: 11 }), { after: 200 })); i++; continue; }
+    let j = i; while (j < bl.length && bl[j].tipo === 'foto') j++;
+    const grp = bl.slice(i, j); const rows = [];
+    for (let k = 0; k < grp.length; k += 2) {
+      const pair = grp.slice(k, k + 2); let cells = '';
+      for (const f of pair) { nFoto++; cells += cell(par(image(f.src, f.w, f.h, 7.6, 8), { align: 'center', after: 40 }) + par(run(f.comentario ? `Foto ${nFoto}. ${f.comentario}` : `Foto ${nFoto}`, { sz: 9, color: GREY }), { align: 'center', after: 120 }), 4819); }
+      if (pair.length < 2) cells += cell(par(run(' '), { after: 0 }), 4819);
+      rows.push(cells);
+    }
+    body.push(table(rows, [4819, 4819], false)); i = j;
+  }
+  const firm = o.agentes.filter(a => a.nombre);
+  if (T.firmas && firm.length) {
+    body.push(par(run('FIRMAS', { b: true, sz: 9, color: BLUE }), { before: 360, after: 120, border: true }));
+    const rows = [];
+    for (let k = 0; k < firm.length; k += 3) { let cells = ''; const trio = firm.slice(k, k + 3); for (const a of trio) cells += cell(par(run('FIRMA:', { sz: 7, color: GREY }), { after: 360 }) + `<w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="6" w:space="1" w:color="${T.hexLight}"/></w:pBdr><w:spacing w:before="0" w:after="0"/></w:pPr>${run(a.nombre, { b: true, sz: 9 })}</w:p>` + par(run(a.rol.toUpperCase(), { sz: 7, color: GREY }), { after: 200 }), 3212); for (let e = trio.length; e < 3; e++) cells += cell(par(run(' '), { after: 0 }), 3212); rows.push(cells); }
+    body.push(table(rows, [3212, 3212, 3212], false));
+  }
+  body.push(`<w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="6" w:color="D3DFEC"/></w:pBdr><w:spacing w:before="360" w:after="0"/><w:jc w:val="both"/></w:pPr>${run(T.legal, { sz: 7.5, color: GREY })}</w:p>`);
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>${body.join('')}<w:sectPr><w:footerReference w:type="default" r:id="rIdFooter"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const footer = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="1" w:color="D3DFEC"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="9638"/></w:tabs></w:pPr>${run(`${o.nombre} · ${T.titulo.charAt(0) + T.titulo.slice(1).toLowerCase()} ${vis.numero} · ${fmtDate(vis.fecha)}  ·  Documento generado con Visitas de Obra`, { sz: 8, color: GREY })}<w:r><w:tab/></w:r>${run('Página ', { sz: 8, color: GREY })}<w:r><w:rPr><w:color w:val="${GREY}"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="${GREY}"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val="${GREY}"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r></w:p></w:ftr>`;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:lang w:val="es-ES"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`;
+  const enc = new TextEncoder();
+  const files = [
+    { name: '[Content_Types].xml', data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`) },
+    { name: '_rels/.rels', data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`) },
+    { name: 'word/document.xml', data: enc.encode(doc) },
+    { name: 'word/styles.xml', data: enc.encode(styles) },
+    { name: 'word/footer1.xml', data: enc.encode(footer) },
+    { name: 'word/_rels/document.xml.rels', data: enc.encode(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rIdFooter" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>${rels.map(r => `<Relationship Id="${r.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${r.target}"/>`).join('')}</Relationships>`) },
+    ...media.map(m => ({ name: 'word/media/' + m.name, data: m.bytes }))
+  ];
+  return makeZip(files);
+}
+
+/* ---------- entrega del archivo: claude.ai · compartir · descarga ---------- */
+async function deliver(blob, filename) {
+  if (downloadsNS) { try { await downloadsNS.save({ filename, data: blob }); toast('Archivo guardado'); return; } catch (err) { if (err && err.code === 'declined') return; console.warn('downloads', err); } }
+  const type = blob.type || 'application/octet-stream';
+  const file = new File([blob], filename, { type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: filename }); return; } catch (err) { if (err && err.name === 'AbortError') return; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast('Descargando ' + filename);
+}
+
+/* ---------- arranque ---------- */
+(async function init() {
+  try { S.obras = (await Store.allObras()) || []; const p = await Store.getKV('perfil'); if (p) S.perfil = { ...S.perfil, ...p }; } catch (err) { console.error(err); toast('No se pudieron cargar los datos guardados'); }
+  S.obras.forEach(o => { o.visitas = o.visitas || []; o.agentes = o.agentes || []; });
+  history.replaceState({ name: 'home' }, ''); render();
+  if (window.claude && typeof window.claude.use === 'function') { try { downloadsNS = await window.claude.use('downloads'); } catch { downloadsNS = null; } }
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !window.claude) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
+  document.addEventListener('visibilitychange', () => { if (document.hidden && S.view.name === 'visita') { const { o } = curVisita(); if (o) saveObra(o); } });
+})();
+</script>
+</body>
+</html>
