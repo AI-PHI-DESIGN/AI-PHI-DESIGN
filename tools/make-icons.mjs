@@ -10,21 +10,24 @@ function png(size, paint) {
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
-// Icono: cuadrado azul marino con esquinas redondeadas, arco celeste y una "V" blanca.
-const NAVY = [18, 59, 99], SKY = [143, 188, 230], WHITE = [255, 255, 255];
+// Icono: cuadrado azul con degradado, casco de obra ámbar con visera y un check blanco.
+const NAVY = [15, 61, 110], BLUE = [30, 111, 217], AMBER = [245, 166, 35], BRIM = [217, 123, 11], WHITE = [255, 255, 255];
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const seg = (u, v, ax, ay, bx, by) => { const t = Math.max(0, Math.min(1, ((u - ax) * (bx - ax) + (v - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2))); return Math.hypot(u - (ax + t * (bx - ax)), v - (ay + t * (by - ay))); };
 function paint(x, y, s) {
   const r = s * .22, u = x / s, v = y / s;
   const cx = Math.min(Math.max(x, r), s - r), cy = Math.min(Math.max(y, r), s - r);
   const dCorner = Math.hypot(x - cx, y - cy) - r; if (dCorner > .5) return [0, 0, 0, 0];
-  let col = NAVY;
-  // arco: anillo centrado en (0.5, 0.62), radio 0.30, grosor 0.06, sólo mitad superior
-  const ar = Math.hypot(u - .5, v - .62), aw = Math.abs(ar - .30);
-  if (v < .62 && aw < .035) col = mix(col, SKY, Math.min(1, (.035 - aw) / .012));
-  // "V": dos trazos desde (0.32,0.5) y (0.68,0.5) hasta (0.5,0.78)
-  const seg = (ax, ay, bx, by) => { const t = Math.max(0, Math.min(1, ((u - ax) * (bx - ax) + (v - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2))); return Math.hypot(u - (ax + t * (bx - ax)), v - (ay + t * (by - ay))); };
-  const dv = Math.min(seg(.33, .50, .5, .78), seg(.67, .50, .5, .78));
-  if (dv < .045) col = mix(col, WHITE, Math.min(1, (.045 - dv) / .012));
+  let col = mix(NAVY, BLUE, (u + v) / 2);
+  const aa = d => Math.min(1, Math.max(0, d / .008));
+  // cúpula del casco: semicírculo centro (0.5,0.60) radio 0.30, sólo por encima
+  const dd = .30 - Math.hypot(u - .5, v - .60); if (v <= .60 && dd > -.008) col = mix(col, AMBER, aa(dd + .008));
+  // visera: rectángulo redondeado y=0.585..0.665, x=0.13..0.87
+  const bx = Math.max(.13 + .04 - u, u - (.87 - .04), 0), by = Math.max(.585 + .04 - v, v - (.665 - .04), 0); const db = .04 - Math.hypot(bx, by);
+  if (db > -.008) col = mix(col, BRIM, aa(db + .008));
+  // check blanco sobre la cúpula
+  const dv = Math.min(seg(u, v, .37, .42, .47, .52), seg(u, v, .47, .52, .64, .33));
+  if (dv < .05) col = mix(col, WHITE, aa(.05 - dv));
   const alpha = Math.round(255 * Math.min(1, .5 - dCorner));
   return [...col, alpha];
 }

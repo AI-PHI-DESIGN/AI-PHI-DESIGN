@@ -30,10 +30,13 @@ del tipo «hazme una app de visitas de obra como ACTA» se resuelva de la misma 
 
 ## 3. Diseño
 
-- Paleta (tokens CSS en `:root`, con variante oscura): fondo `#EEF3F9`, tarjetas blancas, azul marino `#123B63` (botones y títulos, equivale al marrón de ACTA), azul `#2F6FAB`, celeste `#8FBCE6` (arco del logotipo), verde `#3FA55B` para «Activa», rojo `#D9534F` para borrar.
-- Tipografía: *Fira Sans* (Google Fonts, con fallback del sistema).
-- Componentes calcados de ACTA: barra superior con ☰ / logo / lupa, tarjetas redondeadas con píldora de estado, botón inferior a todo el ancho en mayúsculas, chips de agentes en dos columnas, tres «pastillas» (texto / foto / micro) sobre «Guardar en la visita», menú lateral con cabecera de color.
-- Logotipo de la app: palabra **VISITA** bajo un arco celeste (análogo al de ACTA).
+El cliente pidió primero «muy parecido a ACTA» y después matizó: **el contenido es lo importante, el diseño no tiene que ser igual; cambiar el logo y darle más vida**. La versión final:
+
+- Paleta (tokens CSS en `:root`, con variante oscura): fondo `#EDF3FA`, tarjetas blancas, azul marino `#0F3D6E` y azul vivo `#1E6FD9` (cabeceras con **degradado** entre ambos), celeste `#BFD8F7`, **ámbar** `#F5A623` como acento cálido (casco, botón «Nueva visita», marcador de sección, herramienta Voz), verde-azulado `#12A08A` (Foto), verde `#31A85B` para «Activa», rojo `#E8554E` para borrar.
+- Tipografía: *Nunito* (Google Fonts, pesos 500/700/800) con fallback del sistema; títulos en 800.
+- Logotipo propio: **casco de obra ámbar con visera y un check blanco** + marca «Visitas / DE OBRA». Mismo motivo en los iconos PWA (`tools/make-icons.mjs` los rasteriza de forma procedimental) y como logotipo por defecto en el PDF (dibujado con curvas Bézier) cuando la empresa no ha subido el suyo.
+- Elementos «con vida»: cabecera en degradado con esquinas inferiores redondeadas, tarjetas con **franja lateral de color** (verde activa, gris cerrada, azul visita), etiquetas de tipo, contador de visitas y última visita, herramientas Texto/Foto/Voz con etiqueta y color propio, insignias de color en cada bloque de la visita, ilustración de estado vacío con grúa, casco y edificios.
+- Estructura de pantallas calcada de ACTA (lo que el cliente conoce): Mis obras → Ajustes de obra con chips de agentes → Obra con lista de visitas → Visita por bloques → menú lateral.
 - Documentos: *Acta* en azules con firmas y texto legal; *Informe de situación* en verdes (`#1C6640`, `#3F9A61`) sin firmas. Ambos: logo + empresa a la izquierda, título/fecha/obra/dirección a la derecha, tabla de datos de obra, tabla de agentes con contacto, contenido con fotos en rejilla de 2 columnas y separador vertical, pie con paginación.
 
 ## 4. Modelo de datos
