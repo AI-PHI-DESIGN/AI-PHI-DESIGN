@@ -59,7 +59,47 @@ perfil = { nombre, empresa, telefono, email, logo: { src, w, h } | null }
 5. Generar la versión Artifact (`python3 tools/make-artifact.py` → `dist/artifact.html`, sin `<html>/<head>/<body>`) y publicarla con la capacidad `downloads`.
 6. Commit y push a la rama indicada; instrucciones de GitHub Pages en el README.
 
-## 6. Cómo ampliar
+## 6. Distribución: quién puede usarla y descargar
+
+Dos formas de repartirla, y no valen lo mismo:
+
+| | Artifact de claude.ai | GitHub Pages |
+|---|---|---|
+| Instalable en el móvil | No | Sí (PWA, icono propio) |
+| Funciona sin cobertura | No | Sí (service worker) |
+| Descargar PDF/Word | Solo el propietario del artefacto | Cualquiera |
+
+Dentro del artefacto la única vía de guardado es la capacidad `downloads` de claude.ai, y esa
+capacidad la resuelve el propietario: a quien abre el enlace compartido le sale un aviso de permisos.
+Por eso, **para pasársela a otra persona que tenga que emitir documentos, se usa GitHub Pages**.
+
+Receta para dejarlo listo:
+
+1. En GitHub: **Settings → Pages → Source: Deploy from a branch →** rama que contenga `index.html`,
+   carpeta `/ (root)` **→ Save**. La app queda en `https://<usuario>.github.io/<repositorio>/`.
+2. Poner esa dirección en `APP_URL` (en `index.html`): la usan la hoja «Instalar en el móvil»
+   y el aviso que sale cuando la descarga está bloqueada dentro del artefacto.
+3. En el móvil: abrir la URL → Chrome: menú ⋮ → *Instalar aplicación*; Safari: Compartir →
+   *Añadir a pantalla de inicio*. La app captura `beforeinstallprompt` y ofrece el botón
+   **Instalar aplicación** desde el menú ☰ cuando el navegador lo permite.
+
+Detalles que hacen que el «sin conexión» funcione de verdad:
+
+- `sw.js` sirve el esqueleto **desde la caché primero** (no red primero): así arranca sin cobertura
+  y refresca en segundo plano. Las navegaciones responden siempre con `index.html` cacheado.
+- Se cachean también las tipografías de `fonts.googleapis.com`/`fonts.gstatic.com` la primera vez
+  que se cargan con conexión.
+- Al subir versión hay que **subir `CACHE`** (`visitas-obra-vN`); la app manda `skipWaiting` para
+  que la versión nueva entre sin esperar a cerrar todas las pestañas.
+- El service worker **no** se registra dentro del artefacto (`enArtefacto()`), donde no aplica.
+- Los datos ya viven en IndexedDB del dispositivo, así que sin conexión no se pierde nada.
+
+Prueba de que funciona (Playwright): cargar la app, esperar a `navigator.serviceWorker.ready`,
+crear una obra, `ctx.setOffline(true)` **y cerrar el servidor**, recargar y comprobar que sigue
+apareciendo la obra. Y simular el artefacto con `addInitScript` inyectando un `window.claude`
+cuyo `downloads.save` lanza un error de permisos, para ver que sale el aviso en vez de fallar mudo.
+
+## 7. Cómo ampliar
 
 - Nuevo rol de agente fijo: añadirlo al array `ROLES`.
 - Nuevo tipo de documento: añadir una entrada en `DOC_TIPOS` (título, colores, si lleva firmas, texto legal) y una opción en la hoja «Emitir documento».

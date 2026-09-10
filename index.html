@@ -234,6 +234,7 @@ const I = {
   edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/><path d="M10 11v6M14 11v6"/></svg>',
   pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v6"/><path d="M14 3v5h5"/><path d="M19 8v3"/><text x="3" y="21" font-size="8.5" font-weight="700" fill="currentColor" stroke="none" font-family="Arial,sans-serif">PDF</text></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4"/><path d="M5 17v3h14v-3"/></svg>',
   info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/></svg>',
   text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 11h14M5 15h14M5 19h9"/></svg>',
   image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>',
@@ -288,6 +289,10 @@ const Store = (() => {
 const ROLES = ['Promotor', 'Constructor', 'Dirección Facultativa', 'Dir. Ejecución de Obra', 'Coord. Seguridad y Salud'];
 const S = { obras: [], perfil: { nombre: '', empresa: '', telefono: '', email: '', logo: null }, view: { name: 'home' }, sortDesc: true, query: '', draft: null };
 let downloadsNS = null; // capacidad de descarga cuando la página se abre como artefacto de claude.ai
+const enArtefacto = () => !!window.claude; // la página se está viendo dentro del artefacto de claude.ai
+// Dirección pública de la app instalable (GitHub Pages). Si cambia el repositorio, cambiar aquí.
+const APP_URL = 'https://ai-phi-design.github.io/AI-PHI-DESIGN/';
+let installPrompt = null; // evento beforeinstallprompt guardado para el boton Instalar
 
 const findObra = id => S.obras.find(o => o.id === id);
 const findVisita = (o, id) => o && o.visitas.find(v => v.id === id);
@@ -471,10 +476,12 @@ function openMenu() {
     <button data-go="perfil">${I.user}<span>Mi perfil</span></button>
     <button data-act="backup">${I.save}<span>Copia de seguridad</span></button>
     <button data-act="restore">${I.upload}<span>Restaurar copia</span></button>
+    <button data-act="instalar">${I.download}<span>Instalar en el móvil</span></button>
     <button data-act="acerca">${I.info}<span>Acerca de</span></button></nav>
-    <div class="ver">Visitas de Obra · v1.0</div></aside>`, true);
+    <div class="ver">Visitas de Obra · v1.1</div></aside>`, true);
 }
-function sheet(html) { return overlay(`<div class="sheet"><div class="grip"></div>${html}</div>`); }
+function hideToast() { clearTimeout(toastT); const t = $('.toast'); if (t) t.remove(); }
+function sheet(html) { hideToast(); return overlay(`<div class="sheet"><div class="grip"></div>${html}</div>`); }
 
 /* ---------- acciones (delegación de eventos) ---------- */
 document.addEventListener('click', async e => {
@@ -525,11 +532,46 @@ document.addEventListener('click', async e => {
     case 'savePerfil': await Store.setKV('perfil', S.perfil); toast('Perfil guardado'); back(); break;
     case 'backup': { closeOverlay(); const data = JSON.stringify({ app: 'visitas-obra', version: 1, exportedAt: new Date().toISOString(), perfil: S.perfil, obras: S.obras }); await deliver(new Blob([data], { type: 'application/json' }), `copia-visitas-obra-${todayISO()}.json`); break; }
     case 'restore': { closeOverlay(); const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'application/json,.json'; inp.onchange = async () => { try { const j = JSON.parse(await inp.files[0].text()); if (!j.obras) throw new Error('Archivo no válido'); for (const o of j.obras) { await Store.putObra(o); const i = S.obras.findIndex(x => x.id === o.id); if (i >= 0) S.obras[i] = o; else S.obras.push(o); } if (j.perfil) { S.perfil = j.perfil; await Store.setKV('perfil', S.perfil); } toast(`Restauradas ${j.obras.length} obras`); render(); } catch (err) { toast('No se pudo restaurar: ' + err.message); } }; inp.click(); break; }
+    case 'instalar': closeOverlay(); sheetInstalar(); break;
+    case 'doInstall': { closeOverlay(); if (!installPrompt) return sheetInstalar(); const ev = installPrompt; installPrompt = null; try { ev.prompt(); const r = await ev.userChoice; if (r && r.outcome === 'accepted') toast('Instalando la app…'); } catch { toast('No se pudo iniciar la instalación'); } break; }
+    case 'copiarEnlace': { try { await navigator.clipboard.writeText(APP_URL); toast('Enlace copiado'); } catch { toast(APP_URL); } break; }
     case 'acerca': closeOverlay(); sheet(`<h3>Visitas de Obra</h3><p style="margin:0 4px 12px;color:var(--ink-2)">Registro de visitas de obra con datos de obra y agentes, notas, fotos con comentarios y dictado por voz. Exporta cada visita a PDF o Word con el encabezado de la obra y el logotipo de tu empresa.</p><p style="margin:0 4px 12px;color:var(--ink-2)">Los datos se guardan en este dispositivo. Haz copias de seguridad desde el menú para no perderlos.</p>`); break;
     case 'confirmYes': closeOverlay(); if (pendingConfirm) { const f = pendingConfirm; pendingConfirm = null; await f(); } break;
     case 'confirmNo': closeOverlay(); pendingConfirm = null; break;
   }
 });
+/* ---------- instalar la app en el móvil ---------- */
+const esIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const yaInstalada = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function sheetInstalar() {
+  const enlace = `<div class="field" style="margin-top:4px"><span class="lbl">Enlace de la app</span>
+      <input class="inp" value="${esc(APP_URL)}" readonly onclick="this.select()">
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="copiarEnlace">Copiar enlace</button>
+      <a class="btn ghost" href="${esc(APP_URL)}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Abrir</a></div></div>`;
+  if (enArtefacto()) return sheet(`<h3>Instalar en el móvil</h3>
+    <p style="margin:0 4px 12px;color:var(--ink-2)">Estás viendo la app dentro de claude.ai, y ahí no se puede instalar ni descargar archivos. Abre este enlace en el navegador del móvil y añádela a la pantalla de inicio: funcionará sin cobertura y podrás exportar PDF y Word.</p>${enlace}`);
+  if (yaInstalada()) return sheet(`<h3>App instalada</h3>
+    <p style="margin:0 4px 12px;color:var(--ink-2)">Ya la estás usando como aplicación. Funciona sin conexión: las obras, visitas y fotos se guardan en el propio móvil.</p>`);
+  if (installPrompt) return sheet(`<h3>Instalar en el móvil</h3>
+    <p style="margin:0 4px 16px;color:var(--ink-2)">Se añade a la pantalla de inicio con su icono y se abre como una aplicación, también sin cobertura.</p>
+    <button class="btn up" data-act="doInstall">${I.download} Instalar aplicación</button>`);
+  if (esIOS()) return sheet(`<h3>Instalar en el iPhone</h3>
+    <p style="margin:0 4px 12px;color:var(--ink-2)">En Safari: pulsa <b>Compartir</b> (el cuadrado con la flecha) y elige <b>Añadir a pantalla de inicio</b>. Desde entonces se abre como una app y funciona sin cobertura.</p>${enlace}`);
+  return sheet(`<h3>Instalar en el móvil</h3>
+    <p style="margin:0 4px 12px;color:var(--ink-2)">En Chrome: menú <b>⋮</b> → <b>Instalar aplicación</b> (o <b>Añadir a pantalla de inicio</b>). Desde entonces se abre como una app y funciona sin cobertura.</p>${enlace}`);
+}
+
+function sheetSinDescarga() {
+  sheet(`<h3>Aquí no se puede descargar</h3>
+    <p style="margin:0 4px 12px;color:var(--ink-2)">Dentro de claude.ai solo el propietario del artefacto puede guardar archivos, por eso aparece el aviso de permisos.</p>
+    <p style="margin:0 4px 12px;color:var(--ink-2)">Abre la app desde su enlace propio en el navegador del móvil (e instálala) y el PDF y el Word se descargan con normalidad.</p>
+    <div class="field" style="margin-top:4px"><span class="lbl">Enlace de la app</span>
+      <input class="inp" value="${esc(APP_URL)}" readonly onclick="this.select()">
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="copiarEnlace">Copiar enlace</button>
+      <a class="btn ghost" href="${esc(APP_URL)}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Abrir</a></div></div>`);
+}
+
 let pendingConfirm = null;
 function confirmSheet(title, text, fn) { pendingConfirm = fn; sheet(`<h3>${esc(title)}</h3><p style="margin:0 4px 16px;color:var(--ink-2)">${esc(text)}</p><button class="btn danger" data-act="confirmYes" style="margin-bottom:10px">Sí, eliminar</button><button class="btn ghost" data-act="confirmNo">Cancelar</button>`); }
 
@@ -873,20 +915,38 @@ function buildDOCX(o, vis, perfil, tipo = 'acta') {
 
 /* ---------- entrega del archivo: claude.ai · compartir · descarga ---------- */
 async function deliver(blob, filename) {
-  if (downloadsNS) { try { await downloadsNS.save({ filename, data: blob }); toast('Archivo guardado'); return; } catch (err) { if (err && err.code === 'declined') return; console.warn('downloads', err); } }
+  if (downloadsNS) {
+    try { await downloadsNS.save({ filename, data: blob }); toast('Archivo guardado'); return; }
+    catch (err) { if (err && err.code === 'declined') return; console.warn('downloads', err); }
+  }
   const type = blob.type || 'application/octet-stream';
   const file = new File([blob], filename, { type });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: filename }); return; } catch (err) { if (err && err.name === 'AbortError') return; } }
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return; }
+    catch (err) { if (err && err.name === 'AbortError') return; }
+  }
+  // Dentro del artefacto de claude.ai el navegador bloquea las descargas de quien no es
+  // el propietario: en vez de fallar en silencio, se explica y se ofrece la app instalable.
+  if (enArtefacto()) return sheetSinDescarga();
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 20000); toast('Descargando ' + filename);
 }
 
 /* ---------- arranque ---------- */
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; });
+window.addEventListener('appinstalled', () => { installPrompt = null; toast('App instalada'); });
+
 (async function init() {
   try { S.obras = (await Store.allObras()) || []; const p = await Store.getKV('perfil'); if (p) S.perfil = { ...S.perfil, ...p }; } catch (err) { console.error(err); toast('No se pudieron cargar los datos guardados'); }
   S.obras.forEach(o => { o.visitas = o.visitas || []; o.agentes = o.agentes || []; });
   history.replaceState({ name: 'home' }, ''); render();
   if (window.claude && typeof window.claude.use === 'function') { try { downloadsNS = await window.claude.use('downloads'); } catch { downloadsNS = null; } }
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !window.claude) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !enArtefacto()) {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // Si hay una versión nueva esperando, se activa para que la caché sin conexión quede al día.
+      if (reg.waiting) reg.waiting.postMessage('skipWaiting');
+      reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) w.postMessage('skipWaiting'); }); });
+    }).catch(() => {});
+  }
   document.addEventListener('visibilitychange', () => { if (document.hidden && S.view.name === 'visita') { const { o } = curVisita(); if (o) saveObra(o); } });
 })();
 </script>

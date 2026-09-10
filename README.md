@@ -16,20 +16,26 @@ Funciona en el móvil (Android e iPhone) y en el ordenador, sin instalar nada y 
   - Tipo **Acta de visita** (azul, con bloque de firmas de los agentes y texto legal) o **Informe de situación de obra** (verde).
   - Formato **PDF** o **Word (.docx)** editable. Ambos llevan el encabezado con el **logotipo**, datos de la empresa, título, **fecha**, obra y dirección; tabla de datos de obra; tabla de agentes con contacto; textos y fotos (en rejilla de dos columnas) con sus comentarios; pie con paginación.
 - **Mi perfil** (menú ☰): logotipo, empresa, nombre y contacto que van en el encabezado de los documentos.
+- **Instalar en el móvil** (menú ☰): botón de instalación cuando el navegador lo permite, e instrucciones y enlace en el resto de casos.
 - **Copia de seguridad / Restaurar** (menú ☰): exporta e importa todos los datos en un archivo `.json`.
   Los datos viven en el propio dispositivo (IndexedDB), no en ningún servidor.
 
 ## Cómo usarla
 
-### Opción A · enlace de claude.ai (inmediata)
-La app está publicada como Artifact de claude.ai (enlace en la conversación). Ábrelo en el móvil y úsalo directamente.
-Nota: dentro del artefacto el dictado por voz puede no tener permiso de micrófono; en ese caso añade un bloque de texto
-y usa el micrófono del **teclado** del móvil, que dicta igual.
-
-### Opción B · GitHub Pages (recomendada, instalable como app)
-1. En GitHub: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` (o la rama que contenga `index.html`) / root → Save**.
+### Opción A · GitHub Pages (la recomendada: instalable, sin conexión y con descargas)
+1. En GitHub: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: la rama que contenga `index.html` / root → Save**.
 2. Al minuto, la app queda en `https://<usuario>.github.io/<repositorio>/`.
-3. En el móvil, abre la URL y elige **Añadir a pantalla de inicio** (Chrome: menú ⋮ → *Instalar aplicación*; Safari: Compartir → *Añadir a pantalla de inicio*). Desde entonces abre como una app, con icono propio y funciona sin conexión.
+   Esa dirección se guarda en la constante `APP_URL` de `index.html`; si cambia el repositorio, cámbiala ahí.
+3. En el móvil, abre la URL y usa el menú ☰ → **Instalar en el móvil** (o Chrome: menú ⋮ → *Instalar aplicación*; Safari: Compartir → *Añadir a pantalla de inicio*).
+   Desde entonces abre como una app, con icono propio, **funciona sin cobertura** y descarga los PDF y Word con normalidad.
+
+Cualquiera con el enlace puede instalarla y usarla; los datos de cada persona se quedan en su propio móvil.
+
+### Opción B · enlace de claude.ai (para verla al momento)
+La app también está publicada como Artifact de claude.ai. Sirve para echarle un vistazo, pero tiene dos límites:
+- **No se puede instalar ni funciona sin conexión.**
+- **Solo el propietario del artefacto puede descargar archivos**: a quien abre el enlace compartido le sale un aviso de permisos al generar el PDF o el Word. La app lo detecta y ofrece el enlace de la Opción A.
+- El dictado por voz puede no tener permiso de micrófono; en ese caso añade un bloque de texto y usa el micrófono del **teclado** del móvil, que dicta igual.
 
 ### Opción C · archivo local
 Copiar `index.html` al móvil y abrirlo con Chrome también funciona (sin instalación ni modo sin conexión).
@@ -41,11 +47,12 @@ No hay dependencias ni build: toda la app es `index.html` (HTML + CSS + JS).
 ```
 index.html             La aplicación completa
 manifest.webmanifest   Manifest PWA (nombre, icono, color)
-sw.js                  Service worker: caché para uso sin conexión
+sw.js                  Service worker: caché (primero caché) para arrancar y usar la app sin cobertura
 icons/                 Iconos (icon.svg, icon-192.png, icon-512.png)
 tools/make-icons.mjs   Genera los PNG de los iconos (node tools/make-icons.mjs)
 tools/make-artifact.py Genera dist/artifact.html para publicar como Artifact de claude.ai
 tools/e2e.mjs          Prueba de extremo a extremo con Playwright (crea obra, visita, fotos, exporta PDF y DOCX)
+tools/e2e-offline.mjs  Prueba sin conexión: corta la red y comprueba que la app arranca y conserva los datos
 tools/check-pdf.py     Comprobación estructural de un PDF generado
 docs/COMO-SE-HIZO.md   Receta completa de cómo se construyó, para repetirlo igual
 ```
@@ -56,4 +63,5 @@ Probar en local:
 npx http-server -p 8080 .        # y abrir http://localhost:8080
 node tools/e2e.mjs /tmp/salida foto1.jpg foto2.jpg   # prueba automática (requiere playwright)
 python3 tools/check-pdf.py "/tmp/salida/Acta visita 1 - ....pdf"
+node tools/e2e-offline.mjs /tmp/salida                # comprueba el modo sin conexión
 ```
