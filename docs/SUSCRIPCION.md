@@ -20,7 +20,7 @@ como servicio de pago, no como requisito para trabajar en obra.
 El avance de obra, las fotos y el acta en PDF deben seguir siendo gratis: son el gancho. Lo de pago es lo que ahorra
 tiempo a un estudio con varias obras y lo que un cliente no puede reproducir a mano.
 
-| | **Gratis** | **Pro · 14,90 €/mes** (o 149 €/año) |
+| | **Gratis** | **Pro · 9,99 €/mes** (o 99,99 €/año) |
 |---|---|---|
 | Obras | 1 obra activa | Ilimitadas |
 | Visitas, fotos, voz, avance | Sí | Sí |
@@ -92,7 +92,11 @@ Pequeños y acotados, siguiendo el estilo actual del `index.html`:
 
 ## 7. Precio
 
-Un aparejador factura una visita de obra muy por encima de 15 €, así que la cuota se paga con ahorrar un rato de
-oficina al mes. Referencia: empezar en **14,90 €/mes por usuario** con dos meses gratis en el plan anual, y un plan
-**Estudio** (5 usuarios, 49 €/mes) en cuanto exista el trabajo en equipo. Subir precio a medida que entren las
-funciones de la fase 4, respetando el precio a quien ya estaba suscrito.
+**9,99 €/mes** o **99,99 €/año** por usuario (el anual sale a 8,33 €/mes: dos meses gratis, y cobra por adelantado
+doce meses de tesorería). Un aparejador factura una visita de obra muy por encima de 10 €, así que la cuota se paga
+con ahorrar un rato de oficina al mes; por debajo de esa cifra el precio deja de leerse como herramienta profesional.
+
+En Stripe se crea un solo producto *Visitas de Obra Pro* con dos precios (mensual y anual) y el cambio entre ambos lo
+gestiona el portal de cliente. Cuando exista el trabajo en equipo, plan **Estudio** de 39,99 €/mes hasta 5 usuarios.
+Subir precio a medida que entren las funciones de la fase 4, respetando siempre el precio a quien ya estaba suscrito
+(en Stripe, dejando activo el precio antiguo en vez de editarlo).
