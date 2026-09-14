@@ -5,13 +5,16 @@ Funciona en el móvil (Android e iPhone) y en el ordenador, sin instalar nada y 
 
 ## Qué hace
 
-- **Obras**: nombre, dirección, tipo, estado (Activa / Cerrada) y **agentes** con nombre y contacto (teléfono y correo):
+- **Obras**: nombre, dirección, tipo, estado (Activa / Cerrada), **avance de obra** (porcentaje ejecutado, con barra
+  en la lista de obras, en la obra y en los documentos) y **agentes** con nombre y contacto (teléfono y correo):
   Promotor, Constructor, Dirección Facultativa, Dir. Ejecución de Obra, Coord. Seguridad y Salud y **Otros** (rol libre, tantos como se quiera).
 - **Visitas**: dentro de cada obra, botón **Nueva visita**. Cada visita se organiza por bloques:
   - **Texto** (notas).
   - **Foto** (cámara o galería, varias a la vez) con **comentario** debajo de cada una.
   - **Voz**: dictado con el micrófono, el texto aparece escrito en un bloque.
   - Los bloques se pueden reordenar y borrar. Todo se guarda automáticamente.
+  - **Avance de obra**: cada visita guarda el porcentaje de obra ejecutada en esa fecha (botón *Actualizar avance*, con
+    deslizador y atajos 0/25/50/75/100 %). El último valor es el que muestra la obra en la lista.
 - **Emitir documento** (icono PDF en la visita): se elige el tipo y el formato.
   - Tipo **Acta de visita** (azul, con bloque de firmas de los agentes y texto legal) o **Informe de situación de obra** (verde).
   - Formato **PDF** o **Word (.docx)** editable. Ambos llevan el encabezado con el **logotipo**, datos de la empresa, título, **fecha**, obra y dirección; tabla de datos de obra; tabla de agentes con contacto; textos y fotos (en rejilla de dos columnas) con sus comentarios; pie con paginación.
@@ -48,6 +51,7 @@ tools/make-artifact.py Genera dist/artifact.html para publicar como Artifact de 
 tools/e2e.mjs          Prueba de extremo a extremo con Playwright (crea obra, visita, fotos, exporta PDF y DOCX)
 tools/check-pdf.py     Comprobación estructural de un PDF generado
 docs/COMO-SE-HIZO.md   Receta completa de cómo se construyó, para repetirlo igual
+docs/SUSCRIPCION.md    Propuesta para cobrar una cuota mensual con servicios adicionales
 ```
 
 Probar en local:

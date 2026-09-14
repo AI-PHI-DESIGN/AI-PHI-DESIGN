@@ -42,9 +42,9 @@ El cliente pidió primero «muy parecido a ACTA» y después matizó: **el conte
 ## 4. Modelo de datos
 
 ```js
-obra = { id, nombre, direccion, tipo, estado: 'activa'|'cerrada',
+obra = { id, nombre, direccion, tipo, estado: 'activa'|'cerrada', avance: 0..100,
          agentes: [{ rol, nombre, telefono, email, custom?: true }],
-         visitas: [{ id, numero, fecha: 'AAAA-MM-DD', createdAt,
+         visitas: [{ id, numero, fecha: 'AAAA-MM-DD', avance: 0..100, createdAt,
                      bloques: [{ id, tipo: 'texto'|'voz', texto } | { id, tipo: 'foto', src, w, h, comentario }] }],
          createdAt, updatedAt }
 perfil = { nombre, empresa, telefono, email, logo: { src, w, h } | null }
@@ -64,3 +64,23 @@ perfil = { nombre, empresa, telefono, email, logo: { src, w, h } | null }
 - Nuevo rol de agente fijo: añadirlo al array `ROLES`.
 - Nuevo tipo de documento: añadir una entrada en `DOC_TIPOS` (título, colores, si lleva firmas, texto legal) y una opción en la hoja «Emitir documento».
 - Cambiar la paleta: solo los tokens de `:root` (y los hex/rgb de `DOC_TIPOS` para los documentos).
+
+## 7. Avance de obra (porcentaje ejecutado)
+
+Añadido después de la primera entrega, a petición del cliente: «en el estado de obras, ver el porcentaje de obra avanzada».
+
+- **Dato**: `obra.avance` (0-100) es el valor vigente; cada visita guarda su propia foto fija en `visita.avance`
+  (se inicializa con el avance de la obra al crearla). Así el documento de una visita antigua sigue diciendo el
+  porcentaje que había ese día, y la obra muestra siempre el último. Las obras guardadas antes de esta versión no
+  tienen el campo: `pct()` las normaliza a 0 sin migración.
+- **Helpers** (junto a `findObra`): `pct(n)` acota y redondea a 0-100, `avanceDe(o, vis)` elige el valor de la visita
+  o, si no lo hay, el de la obra, y `progBar(n, etiqueta)` pinta la barra (degradado azul→verde-azulado, verde al 100 %).
+- **Dónde se ve**: tarjeta de *Mis obras*, tarjeta de la obra, cabecera de la visita, hoja de datos de obra (icono ⓘ)
+  y la tabla de datos de los documentos PDF y Word, con barra dibujada bajo la tabla.
+- **Dónde se edita**: deslizador en *Ajustes de obra* (`#f-avance`, con atajos 0/25/50/75/100 %) y hoja *Actualizar
+  avance* (`avanceSheet`) desde la obra o desde una visita; al guardar desde una visita se actualizan las dos.
+- **En los documentos**: fila `AVANCE DE OBRA · 45% ejecutado`. En el PDF la barra son dos `rect` (fondo `T.light`,
+  relleno `T.accent2` proporcional). En el DOCX, una tabla anidada de dos celdas sombreadas con anchos proporcionales
+  (`hexBg` es el tono claro, `hex2` el relleno), porque OOXML no tiene barra de progreso.
+- **Prueba**: `tools/e2e.mjs` fija el 30 % al crear la obra, lo sube al 45 % desde la visita y comprueba que la barra
+  del 45 % aparece en la obra y en la lista tras recargar; el PDF se valida con `tools/check-pdf.py`.
