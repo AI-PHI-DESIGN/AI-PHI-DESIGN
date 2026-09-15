@@ -43,8 +43,9 @@ El cliente pidió primero «muy parecido a ACTA» y después matizó: **el conte
 
 ```js
 obra = { id, nombre, direccion, tipo, estado: 'activa'|'cerrada', avance: 0..100,
+         capitulos: [{ id, nombre, peso: 0..100, avance: 0..100 }],
          agentes: [{ rol, nombre, telefono, email, custom?: true }],
-         visitas: [{ id, numero, fecha: 'AAAA-MM-DD', avance: 0..100, createdAt,
+         visitas: [{ id, numero, fecha: 'AAAA-MM-DD', avance: 0..100, capitulos: [...], createdAt,
                      bloques: [{ id, tipo: 'texto'|'voz', texto } | { id, tipo: 'foto', src, w, h, comentario }] }],
          createdAt, updatedAt }
 perfil = { nombre, empresa, telefono, email, logo: { src, w, h } | null }
@@ -82,5 +83,24 @@ Añadido después de la primera entrega, a petición del cliente: «en el estado
 - **En los documentos**: fila `AVANCE DE OBRA · 45% ejecutado`. En el PDF la barra son dos `rect` (fondo `T.light`,
   relleno `T.accent2` proporcional). En el DOCX, una tabla anidada de dos celdas sombreadas con anchos proporcionales
   (`hexBg` es el tono claro, `hex2` el relleno), porque OOXML no tiene barra de progreso.
-- **Prueba**: `tools/e2e.mjs` fija el 30 % al crear la obra, lo sube al 45 % desde la visita y comprueba que la barra
-  del 45 % aparece en la obra y en la lista tras recargar; el PDF se valida con `tools/check-pdf.py`.
+- **Prueba**: `tools/e2e.mjs` fija el 30 % al crear la obra, activa los capítulos habituales, puntúa los tres primeros
+  desde la visita y comprueba que el 22 % calculado aparece en la obra y en la lista tras recargar; el PDF se valida
+  con `tools/check-pdf.py`.
+
+## 8. Capítulos de ejecución (medir el avance por partidas)
+
+Segunda petición sobre lo anterior: «que salgan los capítulos de ejecución de obra para medir el porcentaje avanzado».
+
+- **Dato**: `obra.capitulos = [{ id, nombre, peso, avance }]`, y cada visita guarda su copia en `visita.capitulos`
+  (igual que el avance: el acta de una fecha refleja los capítulos de esa fecha).
+- **Cálculo**: `avanceCaps()` es la media ponderada `Σ(peso·avance)/Σpeso`, así que **los pesos no tienen que sumar
+  100**: se reparten en proporción. `avanceDe(o, vis)` usa los capítulos si existen y, si no, el valor manual; el
+  deslizador global sigue ahí para quien no quiera desglosar.
+- **Plantilla**: `CAPITULOS_DEF` con los diez capítulos habituales de edificación y sus pesos orientativos
+  (estructura 18, revestimientos y acabados 20, instalaciones 16…), que suman 100. Son editables y se pueden borrar.
+- **Dónde se edita**: *Ajustes de obra* → *Capítulos de ejecución* (nombre y peso de cada uno, con la suma de pesos
+  calculada en vivo) y la hoja *Actualizar avance*, que muestra un deslizador por capítulo y el total recalculándose
+  arriba (el total y el botón de guardar quedan fijos con `position:sticky` porque la lista es larga).
+- **Dónde se ve**: desplegable «Capítulos de ejecución (n)» en la obra y en la visita, y sección **AVANCE POR
+  CAPÍTULOS DE EJECUCIÓN** en el PDF y el Word, con columnas capítulo / peso / ejecutado / barra y fila de total.
+  El peso se imprime normalizado (`peso·100/Σpeso`) para que se lea como porcentaje aunque no sumen 100.

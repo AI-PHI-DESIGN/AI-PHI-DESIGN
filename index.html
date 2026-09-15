@@ -109,6 +109,30 @@ h2.sec::before{content:"";width:6px;height:22px;border-radius:3px;background:var
 .rng::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--blue);border:4px solid var(--card);cursor:pointer}
 .qpct{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 18px}
 .qpct button{flex:1;min-width:58px;padding:9px 0;border-radius:12px;background:var(--sky-2);color:var(--navy);font-weight:800;font-size:14px}
+.caps{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.caps summary{font-size:14px;font-weight:700;color:var(--blue);cursor:pointer;list-style:none}
+.caps summary::-webkit-details-marker{display:none}
+.caps summary::after{content:" ▾"}
+.caps[open] summary::after{content:" ▴"}
+.cap{margin-top:10px}
+.cap .ct{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:14px;color:var(--ink-2)}
+.cap .ct b{color:var(--navy);font-weight:700}
+.cap .cn{font-weight:700;color:var(--ink)}
+.cap .bar{margin-top:4px;height:7px;border-radius:999px;background:var(--sky-2);overflow:hidden}
+.cap .bar>i{display:block;height:100%;border-radius:999px;background:var(--blue)}
+.cap .bar>i.full{background:var(--green)}
+.capedit{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-top:10px;display:flex;align-items:center;gap:10px}
+.capedit input[type=text]{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-weight:700;color:var(--navy)}
+.capedit input[type=number]{width:62px;border:1.5px solid var(--line);border-radius:10px;padding:7px 8px;font:inherit;font-weight:700;color:var(--ink);background:var(--card);text-align:right}
+.capedit .x{background:transparent;color:var(--red);width:30px;height:30px;flex:none}
+.capedit .x svg{width:20px;height:20px}
+.capsl{margin-top:16px}
+.capsl .ct{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:14px}
+.capsl .ct span:first-child{font-weight:700;color:var(--ink)}
+.capsl .ct b{color:var(--navy)}
+.capsl .rng{margin:6px 0 0}
+.avtot{background:var(--sky-2);border-radius:14px;padding:12px 14px;margin:4px 0 6px;position:sticky;top:-2px;z-index:2;box-shadow:0 6px 12px -8px rgba(15,61,110,.45)}
+.btn.avsave{position:sticky;bottom:0}
 .empty{text-align:center;color:var(--ink-2);padding:34px 20px}
 .empty h3{color:var(--navy);font-size:22px;margin:16px 0 8px;font-weight:800;text-wrap:balance}
 .empty p{margin:0;font-size:17px}
@@ -304,7 +328,17 @@ let downloadsNS = null; // capacidad de descarga cuando la página se abre como 
 const findObra = id => S.obras.find(o => o.id === id);
 /* avance de obra: porcentaje ejecutado, 0-100 */
 const pct = n => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-const avanceDe = (o, vis) => pct(vis && vis.avance != null ? vis.avance : o.avance);
+/* capítulos de ejecución: nombre + peso sobre el total de la obra + porcentaje ejecutado */
+const CAPITULOS_DEF = [['Movimiento de tierras', 3], ['Cimentación', 8], ['Estructura', 18], ['Cubierta', 6],
+  ['Cerramientos y particiones', 12], ['Instalaciones', 16], ['Revestimientos y acabados', 20],
+  ['Carpintería, vidriería y cerrajería', 9], ['Urbanización y exteriores', 4], ['Seguridad y control de calidad', 4]];
+const nuevosCapitulos = () => CAPITULOS_DEF.map(([nombre, peso]) => ({ id: uid(), nombre, peso, avance: 0 }));
+const capsDe = (o, vis) => (vis && vis.capitulos && vis.capitulos.length ? vis.capitulos : (o.capitulos || []));
+const pesoTotal = caps => caps.reduce((s, c) => s + Math.max(0, Number(c.peso) || 0), 0);
+const avanceCaps = caps => { const t = pesoTotal(caps); return t ? pct(caps.reduce((s, c) => s + Math.max(0, Number(c.peso) || 0) * pct(c.avance), 0) / t) : 0; };
+/* el avance total sale de los capítulos si los hay; si no, del valor manual de la obra o de la visita */
+const avanceDe = (o, vis) => { const caps = capsDe(o, vis); return caps.length ? avanceCaps(caps) : pct(vis && vis.avance != null ? vis.avance : o.avance); };
+const capsList = (caps, resumen) => caps.length ? `<details class="caps"><summary>${esc(resumen)}</summary>${caps.map(c => { const v = pct(c.avance); return `<div class="cap"><div class="ct"><span class="cn">${esc(c.nombre)}</span><b>${v}%</b></div><div class="bar"><i class="${v >= 100 ? 'full' : ''}" style="width:${v}%"></i></div></div>`; }).join('')}</details>` : '';
 const progBar = (n, label = 'Avance de obra') => { const v = pct(n); return `<div class="prog${v >= 100 ? ' done' : ''}"><div class="lab"><span>${label}</span><span class="pv">${v}%</span></div><div class="bar"><i style="width:${v}%"></i></div></div>`; };
 const findVisita = (o, id) => o && o.visitas.find(v => v.id === id);
 const saveObra = async o => { o.updatedAt = Date.now(); await Store.putObra(o); };
@@ -349,7 +383,7 @@ function viewHome() {
         <div class="card-h"><h3 class="t">${esc(o.nombre) || 'Sin nombre'}</h3><span class="pill ${o.estado}"><i></i>${o.estado === 'activa' ? 'Activa' : 'Cerrada'}</span></div>
         <div class="s">${I.pin}<span>${esc(o.direccion) || 'Sin dirección'}</span></div>
         <div class="meta">${o.tipo ? `<span class="tag">${esc(o.tipo)}</span>` : ''}<span class="tag amber">${o.visitas.length} visita${o.visitas.length === 1 ? '' : 's'}</span>${o.visitas.length ? `<span class="tag teal">Última: ${fmtDate(o.visitas.slice().sort((a, b) => b.fecha.localeCompare(a.fecha))[0].fecha)}</span>` : ''}</div>
-        ${progBar(o.avance)}
+        ${progBar(avanceDe(o))}
       </button>`).join('') :
       `<div class="empty">${emptyIllu}<h3>${q ? 'Ninguna obra coincide' : 'Todavía no hay obras'}</h3><p>${q ? 'Prueba con otro nombre o dirección.' : 'Crea tu primera obra con sus datos y agentes para empezar a registrar visitas.'}</p></div>`}
   </main>
@@ -366,8 +400,9 @@ function viewObra(id) {
     <div class="card">
       <div class="card-h"><div class="t" style="font-size:18px;display:flex;align-items:center;gap:8px">${I.pin}<span>${esc(o.direccion) || '<span style="color:var(--ink-3)">Sin dirección</span>'}</span></div><span class="pill ${o.estado}"><i></i>${o.estado === 'activa' ? 'Activa' : 'Cerrada'}</span></div>
       <div class="meta">${o.tipo ? `<span class="tag">${esc(o.tipo)}</span>` : ''}<span class="tag amber">${o.visitas.length} visita${o.visitas.length === 1 ? '' : 's'}</span></div>
-      ${progBar(o.avance)}
+      ${progBar(avanceDe(o))}
       <button class="lnk" data-act="avance" data-id="${o.id}" style="margin-top:10px;color:var(--blue);font-size:14px;font-weight:700">Actualizar avance</button>
+      ${capsList(o.capitulos || [], `Capítulos de ejecución (${(o.capitulos || []).length})`)}
       ${ag.length ? `<div class="s small" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">${ag.map(a => `<div><b style="color:var(--navy)">${esc(a.rol)}:</b> ${esc(a.nombre)}${a.telefono ? ` · <a href="tel:${esc(a.telefono)}" style="color:var(--blue);font-weight:700">${esc(a.telefono)}</a>` : ''}</div>`).join('')}</div>` : ''}
     </div>
     <div class="sec-row"><h2 class="sec">Visitas de obra</h2><button class="lnk" data-act="sort">${S.sortDesc ? '↓ Más reciente primero' : '↑ Más antigua primero'}</button></div>
@@ -391,9 +426,10 @@ function resumenVisita(v) {
 function viewObraForm(id) {
   const o = id ? findObra(id) : null;
   if (!S.draft || S.draft.id !== (o ? o.id : 'new')) {
-    S.draft = o ? JSON.parse(JSON.stringify(o)) : { id: 'new', nombre: '', direccion: '', tipo: '', estado: 'activa', avance: 0, agentes: ROLES.slice(0, 3).map(r => ({ rol: r, nombre: '', telefono: '', email: '' })), visitas: [] };
+    S.draft = o ? JSON.parse(JSON.stringify(o)) : { id: 'new', nombre: '', direccion: '', tipo: '', estado: 'activa', avance: 0, capitulos: [], agentes: ROLES.slice(0, 3).map(r => ({ rol: r, nombre: '', telefono: '', email: '' })), visitas: [] };
   }
   const d = S.draft;
+  const caps = d.capitulos || (d.capitulos = []);
   const has = r => d.agentes.some(a => a.rol === r && !a.custom);
   const customs = d.agentes.filter(a => a.custom);
   const agentCard = (a, idx) => `<div class="agent" data-ai="${idx}">
@@ -416,7 +452,19 @@ function viewObraForm(id) {
       <div id="f-avance-prev">${progBar(d.avance, 'Obra ejecutada')}</div>
       <input type="range" class="rng" id="f-avance" min="0" max="100" step="1" value="${pct(d.avance)}" aria-label="Porcentaje de obra ejecutada">
       <div class="qpct">${[0, 25, 50, 75, 100].map(n => `<button type="button" data-act="avanceQ" data-v="${n}">${n}%</button>`).join('')}</div>
-      <p class="hint">Porcentaje de obra ejecutada. Aparece en la lista de obras y en los documentos que emitas.</p></div>
+      <p class="hint">Porcentaje de obra ejecutada. Si defines capítulos abajo, el total se calcula con ellos y este deslizador deja de usarse.</p></div>
+    <div class="field"><span class="lbl">Capítulos de ejecución</span>
+      ${caps.length ? `<p class="hint">Peso de cada capítulo sobre el total de la obra. El avance de la obra es la media ponderada de lo ejecutado en cada uno.</p>
+      ${caps.map((c, i) => `<div class="capedit" data-ci="${i}">
+        <input type="text" data-cf="nombre" value="${esc(c.nombre)}" placeholder="Capítulo">
+        <input type="number" data-cf="peso" value="${pct(c.peso)}" min="0" max="100" step="1" inputmode="numeric" aria-label="Peso del capítulo">
+        <span class="hint" style="margin:0">%</span>
+        <button class="x" data-act="capDel" data-i="${i}" aria-label="Quitar capítulo">${I.trash}</button></div>`).join('')}
+      <p class="hint" style="margin-top:10px">Suma de pesos: <b id="f-pesos" style="color:${pesoTotal(caps) === 100 ? 'var(--green)' : 'var(--amber-2)'}">${pesoTotal(caps)}%</b>${pesoTotal(caps) === 100 ? '' : ' · no hace falta que sumen 100, se reparte en proporción'}</p>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="capAdd">${I.plus} Añadir capítulo</button><button class="btn ghost" data-act="capClear" style="color:var(--red)">Quitar todos</button></div>`
+      : `<p class="hint">Divide la obra en capítulos (estructura, cubierta, instalaciones…) con su peso, para medir el avance capítulo a capítulo y que salga desglosado en el acta.</p>
+      <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="capDefault">${I.plus} Usar capítulos habituales</button><button class="btn ghost" data-act="capAdd">Empezar de cero</button></div>`}
+    </div>
     <div class="field"><span class="lbl">Agentes</span>
       <div class="chips">
         ${ROLES.map(r => `<button class="chip ${has(r) ? 'on' : ''}" data-act="rol" data-r="${esc(r)}">${has(r) ? I.checkc : ''}<span>${esc(r)}</span></button>`).join('')}
@@ -438,6 +486,7 @@ function viewVisita(obraId, id) {
     <div class="card" style="margin-bottom:6px">
       ${progBar(avanceDe(o, v), `Avance en la visita ${v.numero}`)}
       <button class="lnk" data-act="avance" data-id="${o.id}" data-visita="${v.id}" style="margin-top:10px;color:var(--blue);font-size:14px;font-weight:700">Actualizar avance</button>
+      ${capsList(capsDe(o, v), `Capítulos de ejecución (${capsDe(o, v).length})`)}
     </div>
   </div>
   <main class="content tight" id="bloques">
@@ -526,14 +575,24 @@ document.addEventListener('click', async e => {
     case 'estado': S.draft.estado = el.dataset.v; render(); break;
     case 'avance': avanceSheet(el.dataset.id, el.dataset.visita || null); break;
     case 'avanceQ': { S.draft.avance = pct(el.dataset.v); const r = $('#f-avance'); if (r) r.value = S.draft.avance; const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(S.draft.avance, 'Obra ejecutada'); break; }
-    case 'avanceSet': { const r = $('#av-rng'); if (r) { r.value = pct(el.dataset.v); pintaAvanceSheet(r.value); } break; }
-    case 'avanceSave': { const o = findObra(el.dataset.obra); const vis = el.dataset.visita ? findVisita(o, el.dataset.visita) : null; const val = pct($('#av-rng').value); o.avance = val; if (vis) vis.avance = val; await saveObra(o); closeOverlay(); toast(`Avance actualizado al ${val}%`); render(); break; }
+    case 'avanceSet': { S.avEdit.valor = pct(el.dataset.v); const r = $('#av-rng'); if (r) r.value = S.avEdit.valor; pintaAvanceSheet(); break; }
+    case 'avanceCaps': S.avEdit.caps = nuevosCapitulos(); pintaAvanceHoja(); break;
+    case 'avanceSave': { const a = S.avEdit; const o = findObra(a.obraId); const vis = a.visitaId ? findVisita(o, a.visitaId) : null;
+      if (a.caps.length) { o.capitulos = a.caps.map(c => ({ ...c })); if (vis) vis.capitulos = a.caps.map(c => ({ ...c })); }
+      else if (vis) vis.avance = pct(a.valor); else o.avance = pct(a.valor);
+      if (vis) vis.avance = avanceDe(o, vis);
+      o.avance = avanceDe(o);
+      await saveObra(o); closeOverlay(); toast(`Avance actualizado al ${o.avance}%`); render(); break; }
+    case 'capAdd': S.draft.capitulos.push({ id: uid(), nombre: '', peso: 5, avance: 0 }); render(); setTimeout(() => { const c = document.querySelectorAll('.capedit'); const last = c[c.length - 1]; if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); last.querySelector('input').focus(); } }, 50); break;
+    case 'capDel': S.draft.capitulos.splice(+el.dataset.i, 1); render(); break;
+    case 'capDefault': S.draft.capitulos = nuevosCapitulos(); render(); break;
+    case 'capClear': S.draft.capitulos = []; render(); break;
     case 'rol': { const r = el.dataset.r; const i = S.draft.agentes.findIndex(a => a.rol === r && !a.custom); if (i >= 0) S.draft.agentes.splice(i, 1); else S.draft.agentes.push({ rol: r, nombre: '', telefono: '', email: '' }); render(); break; }
     case 'rolOtro': S.draft.agentes.push({ rol: '', nombre: '', telefono: '', email: '', custom: true }); render(); setTimeout(() => { const c = document.querySelectorAll('.agent'); const last = c[c.length - 1]; if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (!document.activeElement || document.activeElement === document.body) last.querySelector('input').focus(); } }, 50); break;
     case 'rmAgent': S.draft.agentes.splice(+el.dataset.i, 1); render(); break;
     case 'saveObra': await doSaveObra(); break;
     case 'delObra': confirmSheet('Eliminar esta obra', 'Se borrarán la obra y todas sus visitas y fotos. Esta acción no se puede deshacer.', async () => { await Store.delObra(el.dataset.id); S.obras = S.obras.filter(x => x.id !== el.dataset.id); toast('Obra eliminada'); go({ name: 'home' }, true); }); break;
-    case 'nuevaVisita': { const o = findObra(el.dataset.id); const numero = o.visitas.reduce((m, x) => Math.max(m, x.numero), 0) + 1; const vis = { id: uid(), numero, fecha: todayISO(), bloques: [], avance: pct(o.avance), createdAt: Date.now() }; o.visitas.push(vis); await saveObra(o); go({ name: 'visita', obraId: o.id, id: vis.id }); break; }
+    case 'nuevaVisita': { const o = findObra(el.dataset.id); const numero = o.visitas.reduce((m, x) => Math.max(m, x.numero), 0) + 1; const vis = { id: uid(), numero, fecha: todayISO(), bloques: [], avance: avanceDe(o), capitulos: (o.capitulos || []).map(c => ({ ...c })), createdAt: Date.now() }; o.visitas.push(vis); await saveObra(o); go({ name: 'visita', obraId: o.id, id: vis.id }); break; }
     case 'fecha': { const inp = $('#fecha-inp'); if (inp.showPicker) { try { inp.showPicker(); } catch { inp.click(); } } else inp.click(); break; }
     case 'addTexto': addBloque({ tipo: 'texto', texto: '' }); break;
     case 'addFoto': sheet(`<h3>Añadir foto</h3><button class="opt" data-act="fotoCam">${I.camera}<span>Hacer una foto<small>Abre la cámara del móvil</small></span></button><button class="opt" data-act="fotoGal">${I.image}<span>Elegir de la galería<small>Puedes seleccionar varias</small></span></button>`); break;
@@ -565,17 +624,28 @@ document.addEventListener('click', async e => {
   }
 });
 let pendingConfirm = null;
-function pintaAvanceSheet(v) { const pv = $('#av-prev'); if (pv) pv.innerHTML = progBar(v, 'Obra ejecutada'); }
+function avanceTotal() { const a = S.avEdit; return a.caps.length ? avanceCaps(a.caps) : pct(a.valor); }
+function pintaAvanceSheet() { const pv = $('#av-prev'); if (pv) pv.innerHTML = progBar(avanceTotal(), 'Obra ejecutada'); }
 function avanceSheet(obraId, visitaId) {
   const o = findObra(obraId); if (!o) return;
   const vis = visitaId ? findVisita(o, visitaId) : null;
-  const val = avanceDe(o, vis);
+  S.avEdit = { obraId, visitaId: visitaId || null, caps: capsDe(o, vis).map(c => ({ ...c })), valor: avanceDe(o, vis) };
+  pintaAvanceHoja();
+}
+function pintaAvanceHoja() {
+  const a = S.avEdit; const o = findObra(a.obraId); const vis = a.visitaId ? findVisita(o, a.visitaId) : null;
+  const cuerpo = a.caps.length
+    ? `${a.caps.map((c, i) => { const v = pct(c.avance); return `<div class="capsl"><div class="ct"><span>${esc(c.nombre)}</span><b>${v}%</b></div>
+        <input type="range" class="rng" data-cap="${i}" min="0" max="100" step="5" value="${v}" aria-label="Ejecutado en ${esc(c.nombre)}"></div>`; }).join('')}
+      <p class="hint" style="margin:14px 4px 0">El total es la media de los capítulos según su peso. Los pesos se cambian en Ajustes de obra.</p>`
+    : `<input type="range" class="rng" id="av-rng" min="0" max="100" step="1" value="${pct(a.valor)}" aria-label="Porcentaje de obra ejecutada">
+      <div class="qpct">${[0, 25, 50, 75, 100].map(n => `<button type="button" data-act="avanceSet" data-v="${n}">${n}%</button>`).join('')}</div>
+      <button class="btn ghost" data-act="avanceCaps" style="margin-bottom:10px">${I.plus} Medir por capítulos de ejecución</button>`;
   sheet(`<h3>Avance de obra</h3>
-    <p style="margin:0 4px 6px;color:var(--ink-2)">Porcentaje de obra ejecutada${vis ? ` en la visita ${vis.numero}` : ''}. Se muestra en la lista de obras y en los documentos que emitas.</p>
-    <div id="av-prev">${progBar(val, 'Obra ejecutada')}</div>
-    <input type="range" class="rng" id="av-rng" min="0" max="100" step="1" value="${val}" aria-label="Porcentaje de obra ejecutada">
-    <div class="qpct">${[0, 25, 50, 75, 100].map(n => `<button type="button" data-act="avanceSet" data-v="${n}">${n}%</button>`).join('')}</div>
-    <button class="btn" data-act="avanceSave" data-obra="${o.id}" ${vis ? `data-visita="${vis.id}"` : ''} style="margin-bottom:10px">Guardar avance</button>`);
+    <p style="margin:0 4px 10px;color:var(--ink-2)">Porcentaje de obra ejecutada${vis ? ` en la visita ${vis.numero}` : ''}. Se muestra en la lista de obras y en los documentos que emitas.</p>
+    <div class="avtot" id="av-prev">${progBar(avanceTotal(), 'Obra ejecutada')}</div>
+    ${cuerpo}
+    <button class="btn avsave" data-act="avanceSave" style="margin:14px 0 4px">Guardar avance</button>`);
 }
 function confirmSheet(title, text, fn) { pendingConfirm = fn; sheet(`<h3>${esc(title)}</h3><p style="margin:0 4px 16px;color:var(--ink-2)">${esc(text)}</p><button class="btn danger" data-act="confirmYes" style="margin-bottom:10px">Sí, eliminar</button><button class="btn ghost" data-act="confirmNo">Cancelar</button>`); }
 
@@ -583,7 +653,12 @@ document.addEventListener('input', e => {
   const t = e.target; const v = S.view;
   if (t.id === 'q') { S.query = t.value; const main = $('main'); const tmp = document.createElement('div'); tmp.innerHTML = viewHome(); main.innerHTML = tmp.querySelector('main').innerHTML; return; }
   if (t.id === 'f-avance' && S.draft) { S.draft.avance = pct(t.value); const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(S.draft.avance, 'Obra ejecutada'); return; }
-  if (t.id === 'av-rng') { pintaAvanceSheet(t.value); return; }
+  if (t.id === 'av-rng') { S.avEdit.valor = pct(t.value); pintaAvanceSheet(); return; }
+  if (t.dataset.cap != null && S.avEdit) { const c = S.avEdit.caps[+t.dataset.cap]; if (c) { c.avance = pct(t.value); const b = t.closest('.capsl').querySelector('b'); if (b) b.textContent = c.avance + '%'; pintaAvanceSheet(); } return; }
+  if (t.dataset.cf && S.draft) { const i = +t.closest('.capedit').dataset.ci; const c = S.draft.capitulos[i];
+    if (c) { c[t.dataset.cf] = t.dataset.cf === 'peso' ? pct(t.value) : t.value;
+      const b = $('#f-pesos'); if (b) { const tot = pesoTotal(S.draft.capitulos); b.textContent = tot + '%'; b.style.color = tot === 100 ? 'var(--green)' : 'var(--amber-2)'; } }
+    return; }
   if (t.dataset.f && S.draft) { S.draft[t.dataset.f] = t.value; return; }
   if (t.dataset.af && S.draft) { const idx = +t.closest('.agent').dataset.ai; S.draft.agentes[idx][t.dataset.af] = t.value; return; }
   if (t.dataset.p) { S.perfil[t.dataset.p] = t.value; return; }
@@ -600,7 +675,8 @@ async function doSaveObra() {
   const d = S.draft;
   if (!d.nombre.trim()) { toast('Pon un nombre a la obra'); $('#f-nombre').focus(); return; }
   d.agentes = d.agentes.map(a => ({ ...a, rol: (a.rol || 'Otro agente').trim(), nombre: a.nombre.trim(), telefono: a.telefono.trim(), email: a.email.trim() }));
-  d.avance = pct(d.avance);
+  d.capitulos = (d.capitulos || []).map(c => ({ ...c, nombre: (c.nombre || 'Capítulo').trim(), peso: pct(c.peso), avance: pct(c.avance) }));
+  d.avance = d.capitulos.length ? avanceCaps(d.capitulos) : pct(d.avance);
   const isNew = d.id === 'new';
   if (isNew) { d.id = uid(); d.createdAt = Date.now(); }
   await saveObra(d);
@@ -781,6 +857,31 @@ function buildPDF(o, vis, perfil, tipo = 'acta') {
   // barra de avance de obra
   const barW = W - 117; pdf.rect(M + 105, yy + 3, barW, barH, T.light, null); if (av > 0) pdf.rect(M + 105, yy + 3, barW * av / 100, barH, T.accent2, null);
   y += rows.length * rowH + 12 + barH + 8 + 14;
+  // — Avance por capítulos de ejecución
+  const caps = capsDe(o, vis);
+  if (caps.length) {
+    seccion('AVANCE POR CAPÍTULOS DE EJECUCIÓN');
+    const cN = M, cP = M + 215, cE = M + 268, cB = M + 325, bw = W - 325;
+    pdf.text('Capítulo', cN, y + 9, 8, { bold: true, color: C.grey });
+    pdf.text('Peso', cP + 34, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
+    pdf.text('Ejecutado', cE + 46, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
+    y += 13;
+    const pesoT = pesoTotal(caps) || 1;
+    for (const c of caps) {
+      const nl = wrapText(c.nombre || '—', 205, 9.5, false), cv = pct(c.avance), pe = Math.round(pct(c.peso) * 1000 / pesoT) / 10;
+      const h = Math.max(nl.length, 1) * 12 + 5; ensure(h);
+      nl.forEach((l, i) => pdf.text(l, cN, y + 9 + i * 12, 9.5, { color: C.ink }));
+      pdf.text(`${pe}%`, cP + 34, y + 9, 9.5, { color: C.grey, align: 'right' });
+      pdf.text(`${cv}%`, cE + 46, y + 9, 9.5, { bold: true, color: T.accent, align: 'right' });
+      pdf.rect(cB, y + 2.5, bw, 7, T.light, null); if (cv > 0) pdf.rect(cB, y + 2.5, bw * cv / 100, 7, T.accent2, null);
+      y += h; pdf.line(M, y - 1, M + W, y - 1, C.line, .4);
+    }
+    ensure(24);
+    pdf.text('TOTAL DE OBRA EJECUTADA', cN, y + 12, 9, { bold: true, color: T.accent });
+    pdf.text(`${av}%`, cE + 46, y + 12, 11, { bold: true, color: T.accent, align: 'right' });
+    pdf.rect(cB, y + 5, bw, 8, T.light, null); if (av > 0) pdf.rect(cB, y + 5, bw * av / 100, 8, T.accent2, null);
+    y += 26;
+  }
   // — Agentes con contacto
   const ag = o.agentes.filter(a => a.nombre || a.telefono || a.email);
   if (ag.length) {
@@ -882,6 +983,23 @@ function buildDOCX(o, vis, perfil, tipo = 'acta') {
     const total = 7438, hecho = Math.max(1, Math.round(total * av / 100)), resto = Math.max(1, total - hecho);
     const barra = cell(par(run(' ', { sz: 4 }), { after: 0 }), hecho, { shade: T.hex2 }) + (av < 100 ? cell(par(run(' ', { sz: 4 }), { after: 0 }), resto, { shade: T.hexLight }) : '');
     body.push(table([cell(par(run('AVANCE', { b: true, sz: 8, color: GREY }), { after: 0 }), 2200) + `<w:tc><w:tcPr><w:tcW w:w="${total}" w:type="dxa"/></w:tcPr>${table([barra], av < 100 ? [hecho, resto] : [total], false)}<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p></w:tc>`], [2200, total], false));
+  }
+  const caps = capsDe(o, vis);
+  if (caps.length) {
+    body.push(par(run('AVANCE POR CAPÍTULOS DE EJECUCIÓN', { b: true, sz: 9, color: BLUE }), { before: 280, after: 60, border: true }));
+    const wC = [4000, 1000, 1300, 3338], pesoT = pesoTotal(caps) || 1;
+    const barraCelda = v => { const hecho = Math.max(1, Math.round(wC[3] * v / 100)), resto = Math.max(1, wC[3] - hecho);
+      const celdas = cell(par(run(' ', { sz: 4 }), { after: 0 }), hecho, { shade: T.hex2 }) + (v < 100 ? cell(par(run(' ', { sz: 4 }), { after: 0 }), resto, { shade: T.hexLight }) : '');
+      return `<w:tc><w:tcPr><w:tcW w:w="${wC[3]}" w:type="dxa"/></w:tcPr>${table([celdas], v < 100 ? [hecho, resto] : [wC[3]], false)}<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p></w:tc>`; };
+    const hd = ['Capítulo', 'Peso', 'Ejecutado', ''].map((t, i) => cell(par(run(t, { b: true, sz: 8, color: GREY }), { after: 0, align: i ? 'right' : null }), wC[i])).join('');
+    const filas = caps.map(c => { const v = pct(c.avance), pe = Math.round(pct(c.peso) * 1000 / pesoT) / 10;
+      return cell(par(run(c.nombre || '—', { sz: 10 }), { after: 0 }), wC[0])
+        + cell(par(run(`${pe}%`, { sz: 10, color: GREY }), { after: 0, align: 'right' }), wC[1])
+        + cell(par(run(`${v}%`, { b: true, sz: 10, color: NAVY }), { after: 0, align: 'right' }), wC[2]) + barraCelda(v); });
+    const total = cell(par(run('TOTAL DE OBRA EJECUTADA', { b: true, sz: 10, color: NAVY }), { after: 0 }), wC[0], { shade: T.hexBg })
+      + cell(par(run(' ', { sz: 8 }), { after: 0 }), wC[1], { shade: T.hexBg })
+      + cell(par(run(`${av}%`, { b: true, sz: 11, color: NAVY }), { after: 0, align: 'right' }), wC[2], { shade: T.hexBg }) + barraCelda(av);
+    body.push(table([hd, ...filas, total], wC, true));
   }
   const ag = o.agentes.filter(a => a.nombre || a.telefono || a.email);
   if (ag.length) {

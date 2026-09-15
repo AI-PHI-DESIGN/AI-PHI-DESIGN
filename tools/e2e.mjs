@@ -35,6 +35,8 @@ await last.locator('[data-af="rol"]').fill('Instalador eléctrico');
 await last.locator('[data-af="nombre"]').fill('Electricidad Vila');
 await last.locator('[data-af="telefono"]').fill('600 777 888');
 await page.locator('#f-avance').fill('30');
+await page.click('[data-act="capDefault"]');            // capítulos de ejecución habituales
+await page.waitForSelector('.capedit');
 await page.screenshot({ path: join(OUT, '02-obra-form.png'), fullPage: true });
 await page.click('button:has-text("Guardar")');
 await page.waitForSelector('text=Visitas de obra');
@@ -57,13 +59,16 @@ await page.click('[data-act="addTexto"]');
 await page.locator('.bloque textarea').last().fill('Próxima visita prevista para la semana que viene, tras el desencofrado.');
 await page.waitForTimeout(800);
 await page.screenshot({ path: join(OUT, '05-visita-bloques.png'), fullPage: true });
-// Avance de obra: se actualiza desde la visita y queda en la obra y en la lista
+// Avance por capítulos: se mide desde la visita y queda en la obra y en la lista
 await page.click('[data-act="avance"]');
-await page.waitForSelector('#av-rng');
-await page.locator('#av-rng').fill('45');
-await page.screenshot({ path: join(OUT, '05b-avance.png') });
+await page.waitForSelector('[data-cap="0"]');
+await page.locator('[data-cap="0"]').fill('100');   // movimiento de tierras (peso 3)
+await page.locator('[data-cap="1"]').fill('100');   // cimentación (peso 8)
+await page.locator('[data-cap="2"]').fill('60');    // estructura (peso 18)
+await page.screenshot({ path: join(OUT, '05b-avance.png'), fullPage: true });
 await page.click('[data-act="avanceSave"]');
-await page.waitForSelector('.prog:has-text("45%")');
+// (3·100 + 8·100 + 18·60) / 100 = 21,8 → 22 %
+await page.waitForSelector('.prog:has-text("22%")');
 // Exportar: interceptamos deliver() para guardar los blobs
 await page.evaluate(() => { window.__files = {}; window.deliver = async (blob, name) => { const b = await blob.arrayBuffer(); window.__files[name] = Array.from(new Uint8Array(b)); }; });
 await page.click('[data-act="export"]');
@@ -80,9 +85,11 @@ const files = await page.evaluate(() => window.__files);
 for (const [name, bytes] of Object.entries(files)) { writeFileSync(join(OUT, name), Buffer.from(bytes)); console.log('exportado', name, bytes.length, 'bytes'); }
 // Persistencia: recargar y comprobar que la obra y la visita siguen ahí
 await page.reload(); await page.waitForSelector('text=San Jacinto 22 B');
-await page.waitForSelector('.prog:has-text("45%")');  // la barra de avance también en Mis obras
+await page.waitForSelector('.prog:has-text("22%")');  // la barra de avance también en Mis obras
 await page.click('text=San Jacinto 22 B'); await page.waitForSelector('text=Visita 1');
-await page.waitForSelector('.prog:has-text("45%")');
+await page.waitForSelector('.prog:has-text("22%")');
+await page.click('.caps summary'); await page.waitForSelector('.cap:has-text("Estructura")');
+await page.screenshot({ path: join(OUT, '09-capitulos.png'), fullPage: true });
 await page.screenshot({ path: join(OUT, '07-obra-con-visita.png') });
 await page.click('[data-go="back"]'); await page.waitForSelector('text=Mis obras'); await page.click('[data-go="menu"]'); await page.waitForTimeout(300); await page.screenshot({ path: join(OUT, '08-menu.png') });
 await browser.close(); srv.close();
