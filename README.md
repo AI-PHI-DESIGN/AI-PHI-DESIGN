@@ -14,6 +14,8 @@ Funciona en el móvil (Android e iPhone) y en el ordenador, sin instalar nada y 
   - **Foto** (cámara o galería, varias a la vez) con **comentario** debajo de cada una.
   - **Voz**: dictado con el micrófono, el texto aparece escrito en un bloque.
   - Los bloques se pueden reordenar y borrar. Todo se guarda automáticamente.
+  - **Cambiar de visita sin salir**: toca el título *Visita N* de la cabecera y se abre la lista de todas las visitas
+    de la obra (con su fecha y un resumen) para saltar a cualquiera o crear una nueva.
   - **Avance de obra**: cada visita guarda el porcentaje de obra ejecutada en esa fecha (botón *Actualizar avance*, con
     deslizador y atajos 0/25/50/75/100 %). El último valor es el que muestra la obra en la lista.
     Si la obra tiene **capítulos de ejecución**, se puntúa cada capítulo y el total se calcula como media ponderada

@@ -59,6 +59,13 @@ img{max-width:100%;display:block}
 .topbar .ttl h1{margin:0;font-size:22px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .topbar .ttl .sub{font-size:14px;color:rgba(255,255,255,.85);margin-top:1px}
 .topbar .ttl .sub button{color:#fff;text-decoration:underline dotted;text-underline-offset:3px}
+.topbar .ttl .th{display:flex;align-items:center;gap:2px;max-width:100%;color:#fff;padding:2px 6px 2px 0;border-radius:10px}
+.topbar .ttl .th svg{width:20px;height:20px;flex:none;opacity:.85}
+.topbar .ttl .th:active{background:rgba(255,255,255,.18)}
+.sheet .opt .vn{width:38px;height:38px;border-radius:50%;background:var(--sky-2);color:var(--navy);display:grid;place-items:center;font-size:16px;font-weight:800;flex:none}
+.sheet .opt.on{outline:2.5px solid var(--blue)}
+.sheet .opt.on .vn{background:var(--blue);color:#fff}
+.sheet .opt .gr{flex:1;min-width:0}
 .brand{display:flex;align-items:center;gap:10px;padding:0 6px;color:#fff;line-height:1}
 .brand svg{width:44px;height:36px;display:block;flex:none}
 .brand b{font-weight:800;font-size:21px;letter-spacing:-.01em}
@@ -362,10 +369,10 @@ function render() {
   else app.innerHTML = viewHome();
   app.querySelectorAll('textarea.auto').forEach(autoGrow);
 }
-function topbar({ back: b, title, sub, right = '', brandTop = false }) {
+function topbar({ back: b, title, sub, right = '', brandTop = false, titleAct = '' }) {
   return `<header class="topbar">
     ${b ? `<button class="ib" data-go="back" aria-label="Volver">${I.back}</button>` : `<button class="ib" data-go="menu" aria-label="Menú">${I.menu}</button>`}
-    ${brandTop ? brand() : `<div class="ttl"><h1>${esc(title)}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`}
+    ${brandTop ? brand() : `<div class="ttl">${titleAct ? `<button class="th" data-act="${titleAct}" aria-label="Cambiar de visita"><h1>${esc(title)}</h1>${I.down}</button>` : `<h1>${esc(title)}</h1>`}${sub ? `<div class="sub">${sub}</div>` : ''}</div>`}
     ${brandTop ? '<div class="ttl"></div>' : ''}
     ${right}
   </header>`;
@@ -480,7 +487,7 @@ function viewObraForm(id) {
 /* ---------- pantalla: editor de visita ---------- */
 function viewVisita(obraId, id) {
   const o = findObra(obraId); const v = findVisita(o, id); if (!v) return viewObra(obraId);
-  return topbar({ back: true, title: `Visita ${v.numero}`, sub: `<button data-act="fecha" title="Cambiar fecha">${fmtDate(v.fecha)}</button><input type="date" id="fecha-inp" value="${v.fecha}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">`,
+  return topbar({ back: true, title: `Visita ${v.numero}`, titleAct: 'pickVisita', sub: `<button data-act="fecha" title="Cambiar fecha">${fmtDate(v.fecha)}</button><input type="date" id="fecha-inp" value="${v.fecha}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none">`,
       right: `<button class="ib" data-act="export" aria-label="Exportar">${I.pdf}</button><button class="ib" data-act="infoObra" aria-label="Datos de obra">${I.info}</button>` }) +
   `<div class="content tight" style="padding-bottom:0">
     <div class="card" style="margin-bottom:6px">
@@ -565,7 +572,8 @@ document.addEventListener('click', async e => {
     if (goTo === 'menu') return openMenu();
     if (goTo === 'obra') return go({ name: 'obra', id: el.dataset.id });
     if (goTo === 'obraForm') { S.draft = null; return go({ name: 'obraForm', id: el.dataset.id || null }); }
-    if (goTo === 'visita') return go({ name: 'visita', obraId: el.dataset.obra, id: el.dataset.id });
+    // cambiar de visita desde otra visita no apila historial: el botón atrás vuelve a la obra
+    if (goTo === 'visita') return go({ name: 'visita', obraId: el.dataset.obra, id: el.dataset.id }, S.view.name === 'visita');
     if (goTo === 'perfil') return go({ name: 'perfil' });
   }
   const v = S.view;
@@ -574,6 +582,7 @@ document.addEventListener('click', async e => {
     case 'sort': S.sortDesc = !S.sortDesc; render(); break;
     case 'estado': S.draft.estado = el.dataset.v; render(); break;
     case 'avance': avanceSheet(el.dataset.id, el.dataset.visita || null); break;
+    case 'pickVisita': visitasSheet(v.obraId, v.id); break;
     case 'avanceQ': { S.draft.avance = pct(el.dataset.v); const r = $('#f-avance'); if (r) r.value = S.draft.avance; const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(S.draft.avance, 'Obra ejecutada'); break; }
     case 'avanceSet': { S.avEdit.valor = pct(el.dataset.v); const r = $('#av-rng'); if (r) r.value = S.avEdit.valor; pintaAvanceSheet(); break; }
     case 'avanceCaps': S.avEdit.caps = nuevosCapitulos(); pintaAvanceHoja(); break;
@@ -592,7 +601,7 @@ document.addEventListener('click', async e => {
     case 'rmAgent': S.draft.agentes.splice(+el.dataset.i, 1); render(); break;
     case 'saveObra': await doSaveObra(); break;
     case 'delObra': confirmSheet('Eliminar esta obra', 'Se borrarán la obra y todas sus visitas y fotos. Esta acción no se puede deshacer.', async () => { await Store.delObra(el.dataset.id); S.obras = S.obras.filter(x => x.id !== el.dataset.id); toast('Obra eliminada'); go({ name: 'home' }, true); }); break;
-    case 'nuevaVisita': { const o = findObra(el.dataset.id); const numero = o.visitas.reduce((m, x) => Math.max(m, x.numero), 0) + 1; const vis = { id: uid(), numero, fecha: todayISO(), bloques: [], avance: avanceDe(o), capitulos: (o.capitulos || []).map(c => ({ ...c })), createdAt: Date.now() }; o.visitas.push(vis); await saveObra(o); go({ name: 'visita', obraId: o.id, id: vis.id }); break; }
+    case 'nuevaVisita': { closeOverlay(); const o = findObra(el.dataset.id); const numero = o.visitas.reduce((m, x) => Math.max(m, x.numero), 0) + 1; const vis = { id: uid(), numero, fecha: todayISO(), bloques: [], avance: avanceDe(o), capitulos: (o.capitulos || []).map(c => ({ ...c })), createdAt: Date.now() }; o.visitas.push(vis); await saveObra(o); go({ name: 'visita', obraId: o.id, id: vis.id }, S.view.name === 'visita'); break; }
     case 'fecha': { const inp = $('#fecha-inp'); if (inp.showPicker) { try { inp.showPicker(); } catch { inp.click(); } } else inp.click(); break; }
     case 'addTexto': addBloque({ tipo: 'texto', texto: '' }); break;
     case 'addFoto': sheet(`<h3>Añadir foto</h3><button class="opt" data-act="fotoCam">${I.camera}<span>Hacer una foto<small>Abre la cámara del móvil</small></span></button><button class="opt" data-act="fotoGal">${I.image}<span>Elegir de la galería<small>Puedes seleccionar varias</small></span></button>`); break;
@@ -646,6 +655,17 @@ function pintaAvanceHoja() {
     <div class="avtot" id="av-prev">${progBar(avanceTotal(), 'Obra ejecutada')}</div>
     ${cuerpo}
     <button class="btn avsave" data-act="avanceSave" style="margin:14px 0 4px">Guardar avance</button>`);
+}
+function visitasSheet(obraId, actualId) {
+  const o = findObra(obraId); if (!o) return;
+  const vis = o.visitas.slice().sort((a, b) => S.sortDesc ? (b.fecha.localeCompare(a.fecha) || b.numero - a.numero) : (a.fecha.localeCompare(b.fecha) || a.numero - b.numero));
+  sheet(`<h3>Visitas de ${esc(o.nombre)}</h3>
+    <p style="margin:0 4px 14px;color:var(--ink-2)">${vis.length} visita${vis.length === 1 ? '' : 's'} registrada${vis.length === 1 ? '' : 's'}. Toca una para abrirla.</p>
+    ${vis.map(v => `<button class="opt${v.id === actualId ? ' on' : ''}" data-go="visita" data-obra="${o.id}" data-id="${v.id}">
+      <span class="vn">${v.numero}</span>
+      <span class="gr">Visita ${v.numero}<small>${fmtDate(v.fecha)}${resumenVisita(v) ? ' · ' + resumenVisita(v) : ''}</small></span>
+      ${v.id === actualId ? I.check : ''}</button>`).join('')}
+    <button class="btn ghost" data-act="nuevaVisita" data-id="${o.id}">${I.plus} Nueva visita</button>`);
 }
 function confirmSheet(title, text, fn) { pendingConfirm = fn; sheet(`<h3>${esc(title)}</h3><p style="margin:0 4px 16px;color:var(--ink-2)">${esc(text)}</p><button class="btn danger" data-act="confirmYes" style="margin-bottom:10px">Sí, eliminar</button><button class="btn ghost" data-act="confirmNo">Cancelar</button>`); }
 

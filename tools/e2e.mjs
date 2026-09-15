@@ -91,6 +91,20 @@ await page.waitForSelector('.prog:has-text("22%")');
 await page.click('.caps summary'); await page.waitForSelector('.cap:has-text("Estructura")');
 await page.screenshot({ path: join(OUT, '09-capitulos.png'), fullPage: true });
 await page.screenshot({ path: join(OUT, '07-obra-con-visita.png') });
+// Selector de visitas: desde una visita se salta a cualquier otra
+await page.click('text=Visita 1');
+await page.waitForSelector('.topbar .th');
+await page.click('.topbar .th');
+await page.waitForSelector('.sheet .opt.on');
+await page.click('[data-act="nuevaVisita"]');                       // crea la visita 2 desde la propia hoja
+await page.waitForSelector('text=Organiza tu visita');
+await page.click('.topbar .th');
+await page.waitForSelector('.sheet .opt:has-text("Visita 1")');
+await page.screenshot({ path: join(OUT, '10-selector-visitas.png') });
+await page.click('.sheet .opt:has-text("Visita 1")');               // y se vuelve a la visita 1
+await page.waitForSelector('.topbar h1:has-text("Visita 1")');
+await page.waitForSelector('text=Se comprueba el forjado');
+await page.click('[data-go="back"]'); await page.waitForSelector('text=Visitas de obra');   // atrás vuelve a la obra
 await page.click('[data-go="back"]'); await page.waitForSelector('text=Mis obras'); await page.click('[data-go="menu"]'); await page.waitForTimeout(300); await page.screenshot({ path: join(OUT, '08-menu.png') });
 await browser.close(); srv.close();
 console.log('E2E OK');

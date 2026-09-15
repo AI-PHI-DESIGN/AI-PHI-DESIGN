@@ -65,6 +65,7 @@ perfil = { nombre, empresa, telefono, email, logo: { src, w, h } | null }
 - Nuevo rol de agente fijo: añadirlo al array `ROLES`.
 - Nuevo tipo de documento: añadir una entrada en `DOC_TIPOS` (título, colores, si lleva firmas, texto legal) y una opción en la hoja «Emitir documento».
 - Cambiar la paleta: solo los tokens de `:root` (y los hex/rgb de `DOC_TIPOS` para los documentos).
+- Selector en la cabecera de una pantalla: pasar `titleAct` a `topbar()` y abrir una hoja desde ese `data-act`.
 
 ## 7. Avance de obra (porcentaje ejecutado)
 
@@ -104,3 +105,15 @@ Segunda petición sobre lo anterior: «que salgan los capítulos de ejecución d
 - **Dónde se ve**: desplegable «Capítulos de ejecución (n)» en la obra y en la visita, y sección **AVANCE POR
   CAPÍTULOS DE EJECUCIÓN** en el PDF y el Word, con columnas capítulo / peso / ejecutado / barra y fila de total.
   El peso se imprime normalizado (`peso·100/Σpeso`) para que se lea como porcentaje aunque no sumen 100.
+
+## 9. Saltar entre visitas desde la propia visita
+
+Pedido igual que la fecha, que ya se cambiaba tocándola: «cuando toques la visita, que salgan las demás para ir
+cambiando y verlas todas».
+
+- `topbar()` acepta `titleAct`: envuelve el `<h1>` en un botón con un galón, y la vista de visita pasa
+  `titleAct: 'pickVisita'`.
+- `visitasSheet(obraId, actualId)` lista todas las visitas de la obra (número en círculo, fecha y el mismo resumen
+  que la tarjeta), marca la actual y ofrece *Nueva visita* al pie. Respeta el orden elegido en la obra (`S.sortDesc`).
+- Navegar entre visitas usa `go(..., true)` cuando ya se está en una visita, igual que al crear una nueva desde la
+  hoja: así el botón atrás del móvil vuelve a la obra y no recorre todas las visitas visitadas.
