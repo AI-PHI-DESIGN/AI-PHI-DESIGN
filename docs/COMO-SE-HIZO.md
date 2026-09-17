@@ -139,9 +139,11 @@ Segunda petición sobre lo anterior: «que salgan los capítulos de ejecución d
   deslizador global sigue ahí para quien no quiera desglosar.
 - **Plantilla**: `CAPITULOS_DEF` con los diez capítulos habituales de edificación y sus pesos orientativos
   (estructura 18, revestimientos y acabados 20, instalaciones 16…), que suman 100. Son editables y se pueden borrar.
-- **Dónde se edita**: *Ajustes de obra* → *Capítulos de ejecución* (nombre y peso de cada uno, con la suma de pesos
-  calculada en vivo) y la hoja *Actualizar avance*, que muestra un deslizador por capítulo y el total recalculándose
-  arriba (el total y el botón de guardar quedan fijos con `position:sticky` porque la lista es larga).
+- **Dónde se edita**: *Ajustes de obra* → *Capítulos de ejecución*, donde cada capítulo tiene **nombre, peso y
+  ejecutado** (las dos cifras juntas, más lo que aporta al total), y la hoja *Actualizar avance*, con un deslizador
+  por capítulo para el día a día en obra (el total y el botón de guardar quedan fijos con `position:sticky` porque la
+  lista es larga). En cuanto la obra tiene capítulos, el campo *Avance de obra* deja de ser un deslizador y pasa a ser
+  la barra calculada (`pintaCapitulos()` la refresca al teclear); el deslizador manual solo aparece sin capítulos.
 - **Dónde se ve**: desplegable «Capítulos de ejecución (n)» en la obra y en la visita, y sección **AVANCE POR
   CAPÍTULOS DE EJECUCIÓN** en el PDF y el Word, con columnas capítulo / peso / ejecutado / barra y fila de total.
   El peso se imprime normalizado (`peso·100/Σpeso`) para que se lea como porcentaje aunque no sumen 100.

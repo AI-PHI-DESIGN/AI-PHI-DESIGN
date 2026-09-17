@@ -129,9 +129,16 @@ h2.sec::before{content:"";width:6px;height:22px;border-radius:3px;background:var
 .cap .bar>i{display:block;height:100%;border-radius:999px;background:var(--blue)}
 .cap .bar>i.full{background:var(--green)}
 .cap .ap{font-size:12.5px;color:var(--ink-3);margin-top:3px}
-.capedit{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-top:10px;display:flex;align-items:center;gap:10px}
-.capedit input[type=text]{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-weight:700;color:var(--navy)}
-.capedit input[type=number]{width:62px;border:1.5px solid var(--line);border-radius:10px;padding:7px 8px;font:inherit;font-weight:700;color:var(--ink);background:var(--card);text-align:right}
+.capedit{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-top:10px}
+.capedit .ct{display:flex;align-items:center;gap:10px}
+.capedit input[type=text]{flex:1;min-width:0;border:0;border-bottom:1.5px dashed var(--line);background:transparent;font:inherit;font-weight:800;color:var(--navy);padding:2px 0}
+.capedit .cf{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin-top:10px}
+.capedit label{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:var(--ink-2)}
+.capedit label.ej{color:var(--blue)}
+.capedit input[type=number]{width:64px;border:1.5px solid var(--line);border-radius:10px;padding:7px 8px;font:inherit;font-size:16px;font-weight:800;color:var(--ink);background:var(--card);text-align:right}
+.capedit label.ej input{border-color:var(--blue);color:var(--navy)}
+.capedit .ap{font-size:12.5px;color:var(--ink-3);margin-left:auto}
+.capedit .ap b{color:var(--ink-2)}
 .capedit .x{background:transparent;color:var(--red);width:30px;height:30px;flex:none}
 .capedit .x svg{width:20px;height:20px}
 .capsl{margin-top:16px}
@@ -467,17 +474,21 @@ function viewObraForm(id) {
       <button data-act="estado" data-v="activa" class="${d.estado === 'activa' ? 'on' : ''}">${d.estado === 'activa' ? I.check : ''} Activa</button>
       <button data-act="estado" data-v="cerrada" class="${d.estado === 'cerrada' ? 'on off' : ''}">${d.estado === 'cerrada' ? I.check : ''} Cerrada</button></div></div>
     <div class="field"><span class="lbl">Avance de obra</span>
-      <div id="f-avance-prev">${progBar(d.avance, 'Obra ejecutada')}</div>
-      <input type="range" class="rng" id="f-avance" min="0" max="100" step="1" value="${pct(d.avance)}" aria-label="Porcentaje de obra ejecutada">
+      <div id="f-avance-prev">${progBar(caps.length ? avanceCaps(caps) : d.avance, 'Obra ejecutada')}</div>
+      ${caps.length ? `<p class="hint">Se calcula solo, con lo ejecutado en cada capítulo y su peso. No hay que escribirlo a mano.</p>`
+      : `<input type="range" class="rng" id="f-avance" min="0" max="100" step="1" value="${pct(d.avance)}" aria-label="Porcentaje de obra ejecutada">
       <div class="qpct">${[0, 25, 50, 75, 100].map(n => `<button type="button" data-act="avanceQ" data-v="${n}">${n}%</button>`).join('')}</div>
-      <p class="hint">Porcentaje de obra ejecutada. Si defines capítulos abajo, el total se calcula con ellos y este deslizador deja de usarse.</p></div>
+      <p class="hint">Porcentaje de obra ejecutada. En cuanto definas capítulos abajo, el total pasa a calcularse solo con ellos.</p>`}</div>
     <div class="field"><span class="lbl">Capítulos de ejecución</span>
-      ${caps.length ? `<p class="hint">Peso de cada capítulo sobre el total de la obra. El avance de la obra es la media ponderada de lo ejecutado en cada uno.</p>
+      ${caps.length ? `<p class="hint">Cada capítulo lleva su <b>peso</b> sobre el total de la obra y lo que tiene <b>ejecutado</b>. El avance de la obra sale de los dos.</p>
       ${caps.map((c, i) => `<div class="capedit" data-ci="${i}">
-        <input type="text" data-cf="nombre" value="${esc(c.nombre)}" placeholder="Capítulo">
-        <input type="number" data-cf="peso" value="${pct(c.peso)}" min="0" max="100" step="1" inputmode="numeric" aria-label="Peso del capítulo">
-        <span class="hint" style="margin:0">%</span>
-        <button class="x" data-act="capDel" data-i="${i}" aria-label="Quitar capítulo">${I.trash}</button></div>`).join('')}
+        <div class="ct"><input type="text" data-cf="nombre" value="${esc(c.nombre)}" placeholder="Capítulo">
+          <button class="x" data-act="capDel" data-i="${i}" aria-label="Quitar capítulo">${I.trash}</button></div>
+        <div class="cf">
+          <label>Peso <input type="number" data-cf="peso" value="${pct(c.peso)}" min="0" max="100" step="1" inputmode="numeric">%</label>
+          <label class="ej">Ejecutado <input type="number" data-cf="avance" value="${pct(c.avance)}" min="0" max="100" step="5" inputmode="numeric">%</label>
+          <span class="ap">aporta <b>${num1(aportaCap(c, caps))}</b>% del total</span>
+        </div></div>`).join('')}
       <p class="hint" style="margin-top:10px">Suma de pesos: <b id="f-pesos" style="color:${pesoTotal(caps) === 100 ? 'var(--green)' : 'var(--amber-2)'}">${pesoTotal(caps)}%</b>${pesoTotal(caps) === 100 ? '' : ' · no hace falta que sumen 100, se reparte en proporción'}</p>
       <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="capAdd">${I.plus} Añadir capítulo</button><button class="btn ghost" data-act="capClear" style="color:var(--red)">Quitar todos</button></div>`
       : `<p class="hint">Esta obra no tiene capítulos, así que el acta sale solo con el porcentaje total. Divídela en capítulos (estructura, cubierta, instalaciones…) con su peso para medir el avance capítulo a capítulo y que salga desglosado en el acta.</p>
@@ -596,7 +607,7 @@ document.addEventListener('click', async e => {
     case 'estado': S.draft.estado = el.dataset.v; render(); break;
     case 'avance': avanceSheet(el.dataset.id, el.dataset.visita || null); break;
     case 'pickVisita': visitasSheet(v.obraId, v.id); break;
-    case 'avanceQ': { S.draft.avance = pct(el.dataset.v); const r = $('#f-avance'); if (r) r.value = S.draft.avance; const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(S.draft.avance, 'Obra ejecutada'); break; }
+    case 'avanceQ': { S.draft.avance = pct(el.dataset.v); const r = $('#f-avance'); if (r) r.value = S.draft.avance; pintaCapitulos(); break; }
     case 'avanceSet': { S.avEdit.valor = pct(el.dataset.v); const r = $('#av-rng'); if (r) r.value = S.avEdit.valor; pintaAvanceSheet(); break; }
     case 'avanceCaps': S.avEdit.caps = nuevosCapitulos(); pintaAvanceHoja(); break;
     case 'avanceSave': { const a = S.avEdit; const o = findObra(a.obraId); const vis = a.visitaId ? findVisita(o, a.visitaId) : null;
@@ -681,6 +692,12 @@ function sheetSinDescarga() {
 }
 
 let pendingConfirm = null;
+function pintaCapitulos() {
+  const caps = (S.draft && S.draft.capitulos) || [];
+  const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(caps.length ? avanceCaps(caps) : S.draft.avance, 'Obra ejecutada');
+  const b = $('#f-pesos'); if (b) { const tot = pesoTotal(caps); b.textContent = tot + '%'; b.style.color = tot === 100 ? 'var(--green)' : 'var(--amber-2)'; }
+  document.querySelectorAll('.capedit .ap b').forEach((el, i) => { if (caps[i]) el.textContent = num1(aportaCap(caps[i], caps)); });
+}
 function avanceTotal() { const a = S.avEdit; return a.caps.length ? avanceCaps(a.caps) : pct(a.valor); }
 function pintaAvanceSheet() { const pv = $('#av-prev'); if (pv) pv.innerHTML = progBar(avanceTotal(), 'Obra ejecutada'); }
 function avanceSheet(obraId, visitaId) {
@@ -721,7 +738,7 @@ function confirmSheet(title, text, fn) { pendingConfirm = fn; sheet(`<h3>${esc(t
 document.addEventListener('input', e => {
   const t = e.target; const v = S.view;
   if (t.id === 'q') { S.query = t.value; const main = $('main'); const tmp = document.createElement('div'); tmp.innerHTML = viewHome(); main.innerHTML = tmp.querySelector('main').innerHTML; return; }
-  if (t.id === 'f-avance' && S.draft) { S.draft.avance = pct(t.value); const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(S.draft.avance, 'Obra ejecutada'); return; }
+  if (t.id === 'f-avance' && S.draft) { S.draft.avance = pct(t.value); pintaCapitulos(); return; }
   if (t.id === 'av-rng') { S.avEdit.valor = pct(t.value); pintaAvanceSheet(); return; }
   if (t.dataset.cap != null && S.avEdit) { const c = S.avEdit.caps[+t.dataset.cap]; if (c) {
     c.avance = pct(t.value);
@@ -729,8 +746,7 @@ document.addEventListener('input', e => {
     document.querySelectorAll('.capsl .apv').forEach((el, i) => { el.textContent = num1(aportaCap(S.avEdit.caps[i], S.avEdit.caps)); });
     pintaAvanceSheet(); } return; }
   if (t.dataset.cf && S.draft) { const i = +t.closest('.capedit').dataset.ci; const c = S.draft.capitulos[i];
-    if (c) { c[t.dataset.cf] = t.dataset.cf === 'peso' ? pct(t.value) : t.value;
-      const b = $('#f-pesos'); if (b) { const tot = pesoTotal(S.draft.capitulos); b.textContent = tot + '%'; b.style.color = tot === 100 ? 'var(--green)' : 'var(--amber-2)'; } }
+    if (c) { c[t.dataset.cf] = t.dataset.cf === 'nombre' ? t.value : pct(t.value); pintaCapitulos(); }
     return; }
   if (t.dataset.f && S.draft) { S.draft[t.dataset.f] = t.value; return; }
   if (t.dataset.af && S.draft) { const idx = +t.closest('.agent').dataset.ai; S.draft.agentes[idx][t.dataset.af] = t.value; return; }

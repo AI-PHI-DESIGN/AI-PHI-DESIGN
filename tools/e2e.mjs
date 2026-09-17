@@ -34,8 +34,12 @@ const last = page.locator('.agent').last();
 await last.locator('[data-af="rol"]').fill('Instalador eléctrico');
 await last.locator('[data-af="nombre"]').fill('Electricidad Vila');
 await last.locator('[data-af="telefono"]').fill('600 777 888');
-await page.locator('#f-avance').fill('30');
 await page.waitForSelector('.capedit');                 // la obra nueva ya trae los capítulos habituales
+// El avance de la obra se calcula solo con lo ejecutado en cada capítulo
+await page.locator('.capedit[data-ci="0"] label.ej input').fill('100');   // movimiento de tierras, peso 3
+await page.waitForSelector('#f-avance-prev .prog:has-text("3%")');
+await page.locator('.capedit[data-ci="1"] label.ej input').fill('50');    // cimentación, peso 8 → 3 + 4 = 7
+await page.waitForSelector('#f-avance-prev .prog:has-text("7%")');
 await page.screenshot({ path: join(OUT, '02-obra-form.png'), fullPage: true });
 await page.click('button:has-text("Guardar")');
 await page.waitForSelector('text=Visitas de obra');
