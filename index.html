@@ -342,6 +342,7 @@ const Store = (() => {
 const ROLES = ['Promotor', 'Constructor', 'Dirección Facultativa', 'Dir. Ejecución de Obra', 'Coord. Seguridad y Salud'];
 const S = { obras: [], perfil: { nombre: '', empresa: '', telefono: '', email: '', logo: null }, view: { name: 'home' }, sortDesc: true, query: '', draft: null };
 let downloadsNS = null; // capacidad de descarga cuando la página se abre como artefacto de claude.ai
+let swReg = null, recargando = false; // service worker y control de la recarga al actualizar
 const enArtefacto = () => !!window.claude; // la página se está viendo dentro del artefacto de claude.ai
 // Dirección pública de la app instalable (GitHub Pages). Si cambia el repositorio, cambiar aquí.
 const APP_URL = 'https://ai-phi-design.github.io/AI-PHI-DESIGN/';
@@ -580,8 +581,9 @@ function openMenu() {
     <button data-act="backup">${I.save}<span>Copia de seguridad</span></button>
     <button data-act="restore">${I.upload}<span>Restaurar copia</span></button>
     <button data-act="instalar">${I.download}<span>Instalar en el móvil</span></button>
-    <button data-act="acerca">${I.info}<span>Acerca de</span></button></nav>
-    <div class="ver">Visitas de Obra · v1.1</div></aside>`, true);
+    <button data-act="acerca">${I.info}<span>Acerca de</span></button>
+    <button data-act="buscarAct">${I.upload}<span>Buscar actualización</span></button></nav>
+    <div class="ver">Visitas de Obra · v1.2</div></aside>`, true);
 }
 function hideToast() { clearTimeout(toastT); const t = $('.toast'); if (t) t.remove(); }
 function sheet(html) { hideToast(); return overlay(`<div class="sheet"><div class="grip"></div>${html}</div>`); }
@@ -654,6 +656,9 @@ document.addEventListener('click', async e => {
     case 'instalar': closeOverlay(); sheetInstalar(); break;
     case 'doInstall': { closeOverlay(); if (!installPrompt) return sheetInstalar(); const ev = installPrompt; installPrompt = null; try { ev.prompt(); const r = await ev.userChoice; if (r && r.outcome === 'accepted') toast('Instalando la app…'); } catch { toast('No se pudo iniciar la instalación'); } break; }
     case 'copiarEnlace': { try { await navigator.clipboard.writeText(APP_URL); toast('Enlace copiado'); } catch { toast(APP_URL); } break; }
+    case 'buscarAct': { closeOverlay(); toast('Buscando actualización…');
+      try { if (swReg) { await swReg.update(); if (swReg.waiting) { swReg.waiting.postMessage('skipWaiting'); break; } } } catch (err) { console.error(err); }
+      recargando = true; location.reload(); break; }
     case 'acerca': closeOverlay(); sheet(`<h3>Visitas de Obra</h3><p style="margin:0 4px 12px;color:var(--ink-2)">Registro de visitas de obra con datos de obra y agentes, notas, fotos con comentarios y dictado por voz. Exporta cada visita a PDF o Word con el encabezado de la obra y el logotipo de tu empresa.</p><p style="margin:0 4px 12px;color:var(--ink-2)">Los datos se guardan en este dispositivo. Haz copias de seguridad desde el menú para no perderlos.</p>`); break;
     case 'confirmYes': closeOverlay(); if (pendingConfirm) { const f = pendingConfirm; pendingConfirm = null; await f(); } break;
     case 'confirmNo': closeOverlay(); pendingConfirm = null; break;
@@ -1178,10 +1183,20 @@ window.addEventListener('appinstalled', () => { installPrompt = null; toast('App
   if (window.claude && typeof window.claude.use === 'function') { try { downloadsNS = await window.claude.use('downloads'); } catch { downloadsNS = null; } }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !enArtefacto()) {
     navigator.serviceWorker.register('sw.js').then(reg => {
+      swReg = reg;
       // Si hay una versión nueva esperando, se activa para que la caché sin conexión quede al día.
       if (reg.waiting) reg.waiting.postMessage('skipWaiting');
       reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) w.postMessage('skipWaiting'); }); });
+      // y se vuelve a mirar cada hora y cada vez que se vuelve a la app
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
     }).catch(() => {});
+    // Cuando la versión nueva toma el mando, se recarga la pantalla para verla sin tener que cerrar la app.
+    navigator.serviceWorker.addEventListener('controllerchange', async () => {
+      if (recargando) return; recargando = true;
+      try { if (S.view.name === 'visita') { const { o } = curVisita(); if (o) await saveObra(o); } } catch (err) { console.error(err); }
+      location.reload();
+    });
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden && S.view.name === 'visita') { const { o } = curVisita(); if (o) saveObra(o); } });
 })();

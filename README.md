@@ -61,6 +61,7 @@ icons/                 Iconos (icon.svg, icon-192.png, icon-512.png)
 tools/make-icons.mjs   Genera los PNG de los iconos (node tools/make-icons.mjs)
 tools/make-artifact.py Genera dist/artifact.html para publicar como Artifact de claude.ai
 tools/e2e.mjs          Prueba de extremo a extremo con Playwright (crea obra, visita, fotos, exporta PDF y DOCX)
+tools/e2e-update.mjs   Prueba de actualización: con la app instalada, comprueba que una versión nueva llega al móvil
 tools/e2e-offline.mjs  Prueba sin conexión: corta la red y comprueba que la app arranca y conserva los datos
 tools/check-pdf.py     Comprobación estructural de un PDF generado
 docs/COMO-SE-HIZO.md   Receta completa de cómo se construyó, para repetirlo igual

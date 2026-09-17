@@ -1,10 +1,11 @@
-// Service worker: deja la app disponible sin conexión.
-// Estrategia: el "esqueleto" de la app (HTML, manifest, iconos) se sirve desde la caché
-// y se refresca en segundo plano, así arranca aunque no haya cobertura. La tipografía
-// de Google se guarda la primera vez que se carga con conexión.
-const CACHE = 'visitas-obra-v3';
+// Service worker: deja la app disponible sin conexión y al día cuando hay cobertura.
+// Estrategia: al abrir la app se pide la versión del servidor con un tiempo de espera corto;
+// si la red responde, esa es la que se ve (y se guarda), y si no responde a tiempo se sirve la
+// copia guardada. El resto (iconos, manifest, tipografías) sale de la caché y se refresca detrás.
+const CACHE = 'visitas-obra-v4';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 const FONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
+const ESPERA_RED = 4000; // ms que se espera a la red antes de tirar de la copia guardada
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE)
@@ -27,6 +28,7 @@ function refresh(req) {
     return r;
   });
 }
+const guardada = () => caches.match('./index.html', { ignoreSearch: true });
 
 self.addEventListener('fetch', e => {
   const req = e.request;
@@ -35,11 +37,14 @@ self.addEventListener('fetch', e => {
   const isFont = FONTS.test(req.url);
   if (!sameOrigin && !isFont) return;
 
-  // Navegaciones: se responde siempre con el index cacheado (arranca al instante y sin cobertura).
+  // Navegaciones: la red manda, con la copia guardada como respaldo si tarda o no hay cobertura.
   if (req.mode === 'navigate') {
-    e.respondWith(caches.match('./index.html', { ignoreSearch: true }).then(hit => {
-      if (hit) { refresh(req).catch(() => {}); return hit; }
-      return refresh(req).catch(() => caches.match('./index.html', { ignoreSearch: true }));
+    e.respondWith(new Promise(resolve => {
+      let resuelto = false;
+      const responder = r => { if (!resuelto && r) { resuelto = true; resolve(r); } };
+      const reserva = () => guardada().then(hit => responder(hit || fetch(req).catch(() => new Response('Sin conexión', { status: 503 }))));
+      setTimeout(reserva, ESPERA_RED);
+      refresh(req).then(responder).catch(reserva);
     }));
     return;
   }
@@ -47,6 +52,6 @@ self.addEventListener('fetch', e => {
   // Resto (esqueleto, iconos, tipografías): caché primero, red como respaldo.
   e.respondWith(caches.match(req, { ignoreSearch: true }).then(hit => {
     if (hit) { refresh(req).catch(() => {}); return hit; }
-    return refresh(req).catch(() => caches.match('./index.html', { ignoreSearch: true }));
+    return refresh(req).catch(() => guardada());
   }));
 });

@@ -106,6 +106,13 @@ cuyo `downloads.save` lanza un error de permisos, para ver que sale el aviso en 
 - Nuevo tipo de documento: añadir una entrada en `DOC_TIPOS` (título, colores, si lleva firmas, texto legal) y una opción en la hoja «Emitir documento».
 - Cambiar la paleta: solo los tokens de `:root` (y los hex/rgb de `DOC_TIPOS` para los documentos).
 - Selector en la cabecera de una pantalla: pasar `titleAct` a `topbar()` y abrir una hoja desde ese `data-act`.
+- **Al publicar una versión nueva**: subir el número de `CACHE` en `sw.js` y la versión visible del menú lateral. El
+  service worker sirve las navegaciones con **la red por delante** (espera 4 s y, si no hay respuesta, tira de la
+  copia guardada), porque con caché primero un móvil con la app instalada seguía viendo la versión anterior aunque
+  hubiera cobertura — el fallo que más tiempo costó en las pruebas con el cliente. Cuando la versión nueva toma el
+  mando (`controllerchange`), la pantalla se recarga sola tras guardar la visita abierta, y el menú tiene *Buscar
+  actualización* para forzarlo. `tools/e2e-update.mjs` lo comprueba: instala, publica una versión distinta, reabre y
+  exige ver la nueva, y luego que sin cobertura siga arrancando.
 
 ## 7. Avance de obra (porcentaje ejecutado)
 
