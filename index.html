@@ -1080,6 +1080,13 @@ async function deliver(blob, filename) {
 (async function init() {
   try { S.obras = (await Store.allObras()) || []; const p = await Store.getKV('perfil'); if (p) S.perfil = { ...S.perfil, ...p }; } catch (err) { console.error(err); toast('No se pudieron cargar los datos guardados'); }
   S.obras.forEach(o => { o.visitas = o.visitas || []; o.agentes = o.agentes || []; });
+  // Obras creadas antes de los capítulos: se les añaden los habituales conservando el avance que tuvieran
+  // (todos los capítulos al mismo porcentaje dan exactamente ese total, y después se afinan uno a uno).
+  for (const o of S.obras) if (!o.capitulos || !o.capitulos.length) {
+    const base = pct(o.avance);
+    o.capitulos = nuevosCapitulos().map(c => ({ ...c, avance: base }));
+    try { await saveObra(o); } catch (err) { console.error(err); }
+  }
   history.replaceState({ name: 'home' }, ''); render();
   if (window.claude && typeof window.claude.use === 'function') { try { downloadsNS = await window.claude.use('downloads'); } catch { downloadsNS = null; } }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !window.claude) { navigator.serviceWorker.register('sw.js').catch(() => {}); }

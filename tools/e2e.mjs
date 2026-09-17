@@ -105,5 +105,20 @@ await page.waitForSelector('.topbar h1:has-text("Visita 1")');
 await page.waitForSelector('text=Se comprueba el forjado');
 await page.click('[data-go="back"]'); await page.waitForSelector('text=Visitas de obra');   // atrás vuelve a la obra
 await page.click('[data-go="back"]'); await page.waitForSelector('text=Mis obras'); await page.click('[data-go="menu"]'); await page.waitForTimeout(300); await page.screenshot({ path: join(OUT, '08-menu.png') });
+// Obra creada antes de los capítulos: al abrir la app se le añaden conservando su avance
+await page.evaluate(async () => {
+  await Store.putObra({ id: 'obra-antigua', nombre: 'Obra antigua sin capítulos', direccion: 'Calle Vieja 1', tipo: 'Reforma',
+    estado: 'activa', avance: 40, agentes: [], visitas: [{ id: 'va', numero: 1, fecha: '2026-01-10', bloques: [], createdAt: Date.now() }],
+    createdAt: Date.now(), updatedAt: Date.now() });
+});
+await page.reload();
+await page.waitForSelector('text=Obra antigua sin capítulos');
+await page.click('text=Obra antigua sin capítulos');
+await page.waitForSelector('.prog:has-text("40%")');          // el avance que tenía se conserva
+await page.click('.caps summary');
+await page.waitForSelector('.cap:has-text("Estructura")');    // y ya tiene los capítulos
+await page.screenshot({ path: join(OUT, '11-obra-antigua-migrada.png'), fullPage: true });
+await page.click('[data-go="back"]'); await page.waitForSelector('text=Mis obras');
+
 await browser.close(); srv.close();
 console.log('E2E OK');
