@@ -35,8 +35,7 @@ await last.locator('[data-af="rol"]').fill('Instalador eléctrico');
 await last.locator('[data-af="nombre"]').fill('Electricidad Vila');
 await last.locator('[data-af="telefono"]').fill('600 777 888');
 await page.locator('#f-avance').fill('30');
-await page.click('[data-act="capDefault"]');            // capítulos de ejecución habituales
-await page.waitForSelector('.capedit');
+await page.waitForSelector('.capedit');                 // la obra nueva ya trae los capítulos habituales
 await page.screenshot({ path: join(OUT, '02-obra-form.png'), fullPage: true });
 await page.click('button:has-text("Guardar")');
 await page.waitForSelector('text=Visitas de obra');

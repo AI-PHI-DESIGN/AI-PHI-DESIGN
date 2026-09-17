@@ -433,7 +433,7 @@ function resumenVisita(v) {
 function viewObraForm(id) {
   const o = id ? findObra(id) : null;
   if (!S.draft || S.draft.id !== (o ? o.id : 'new')) {
-    S.draft = o ? JSON.parse(JSON.stringify(o)) : { id: 'new', nombre: '', direccion: '', tipo: '', estado: 'activa', avance: 0, capitulos: [], agentes: ROLES.slice(0, 3).map(r => ({ rol: r, nombre: '', telefono: '', email: '' })), visitas: [] };
+    S.draft = o ? JSON.parse(JSON.stringify(o)) : { id: 'new', nombre: '', direccion: '', tipo: '', estado: 'activa', avance: 0, capitulos: nuevosCapitulos(), agentes: ROLES.slice(0, 3).map(r => ({ rol: r, nombre: '', telefono: '', email: '' })), visitas: [] };
   }
   const d = S.draft;
   const caps = d.capitulos || (d.capitulos = []);
@@ -469,7 +469,7 @@ function viewObraForm(id) {
         <button class="x" data-act="capDel" data-i="${i}" aria-label="Quitar capítulo">${I.trash}</button></div>`).join('')}
       <p class="hint" style="margin-top:10px">Suma de pesos: <b id="f-pesos" style="color:${pesoTotal(caps) === 100 ? 'var(--green)' : 'var(--amber-2)'}">${pesoTotal(caps)}%</b>${pesoTotal(caps) === 100 ? '' : ' · no hace falta que sumen 100, se reparte en proporción'}</p>
       <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="capAdd">${I.plus} Añadir capítulo</button><button class="btn ghost" data-act="capClear" style="color:var(--red)">Quitar todos</button></div>`
-      : `<p class="hint">Divide la obra en capítulos (estructura, cubierta, instalaciones…) con su peso, para medir el avance capítulo a capítulo y que salga desglosado en el acta.</p>
+      : `<p class="hint">Esta obra no tiene capítulos, así que el acta sale solo con el porcentaje total. Divídela en capítulos (estructura, cubierta, instalaciones…) con su peso para medir el avance capítulo a capítulo y que salga desglosado en el acta.</p>
       <div class="row" style="margin-top:10px"><button class="btn ghost" data-act="capDefault">${I.plus} Usar capítulos habituales</button><button class="btn ghost" data-act="capAdd">Empezar de cero</button></div>`}
     </div>
     <div class="field"><span class="lbl">Agentes</span>
