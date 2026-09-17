@@ -145,6 +145,10 @@ Segunda petición sobre lo anterior: «que salgan los capítulos de ejecución d
 - **Dónde se ve**: desplegable «Capítulos de ejecución (n)» en la obra y en la visita, y sección **AVANCE POR
   CAPÍTULOS DE EJECUCIÓN** en el PDF y el Word, con columnas capítulo / peso / ejecutado / barra y fila de total.
   El peso se imprime normalizado (`peso·100/Σpeso`) para que se lea como porcentaje aunque no sumen 100.
+- **Aportación al total** (`aportaCap`): además de lo ejecutado en cada capítulo, la columna *Del total* dice cuánto
+  aporta a la obra completa (`peso normalizado · ejecutado / 100`): Estructura, con peso 18 % y al 60 %, aporta
+  10,8 %. La columna suma exactamente el total, lo que hace comprobable el porcentaje de la obra. Se muestra con un
+  decimal y coma decimal (`num1`), bajo cada deslizador de la hoja de avance y en el desglose de la obra y la visita.
 
 ## 9. Saltar entre visitas desde la propia visita
 

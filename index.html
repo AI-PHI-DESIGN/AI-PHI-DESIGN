@@ -128,6 +128,7 @@ h2.sec::before{content:"";width:6px;height:22px;border-radius:3px;background:var
 .cap .bar{margin-top:4px;height:7px;border-radius:999px;background:var(--sky-2);overflow:hidden}
 .cap .bar>i{display:block;height:100%;border-radius:999px;background:var(--blue)}
 .cap .bar>i.full{background:var(--green)}
+.cap .ap{font-size:12.5px;color:var(--ink-3);margin-top:3px}
 .capedit{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-top:10px;display:flex;align-items:center;gap:10px}
 .capedit input[type=text]{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-weight:700;color:var(--navy)}
 .capedit input[type=number]{width:62px;border:1.5px solid var(--line);border-radius:10px;padding:7px 8px;font:inherit;font-weight:700;color:var(--ink);background:var(--card);text-align:right}
@@ -138,6 +139,8 @@ h2.sec::before{content:"";width:6px;height:22px;border-radius:3px;background:var
 .capsl .ct span:first-child{font-weight:700;color:var(--ink)}
 .capsl .ct b{color:var(--navy)}
 .capsl .rng{margin:6px 0 0}
+.capsl .ap{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.capsl .ap b{color:var(--ink-2)}
 .avtot{background:var(--sky-2);border-radius:14px;padding:12px 14px;margin:4px 0 6px;position:sticky;top:-2px;z-index:2;box-shadow:0 6px 12px -8px rgba(15,61,110,.45)}
 .btn.avsave{position:sticky;bottom:0}
 .empty{text-align:center;color:var(--ink-2);padding:34px 20px}
@@ -347,10 +350,13 @@ const CAPITULOS_DEF = [['Movimiento de tierras', 3], ['Cimentación', 8], ['Estr
 const nuevosCapitulos = () => CAPITULOS_DEF.map(([nombre, peso]) => ({ id: uid(), nombre, peso, avance: 0 }));
 const capsDe = (o, vis) => (vis && vis.capitulos && vis.capitulos.length ? vis.capitulos : (o.capitulos || []));
 const pesoTotal = caps => caps.reduce((s, c) => s + Math.max(0, Number(c.peso) || 0), 0);
+/* lo que cada capítulo aporta al total de la obra: su peso (normalizado) por lo ejecutado */
+const aportaCap = (c, caps) => { const t = pesoTotal(caps); return t ? Math.max(0, Number(c.peso) || 0) * pct(c.avance) / t : 0; };
+const num1 = n => (Math.round(n * 10) / 10).toString().replace('.', ',');
 const avanceCaps = caps => { const t = pesoTotal(caps); return t ? pct(caps.reduce((s, c) => s + Math.max(0, Number(c.peso) || 0) * pct(c.avance), 0) / t) : 0; };
 /* el avance total sale de los capítulos si los hay; si no, del valor manual de la obra o de la visita */
 const avanceDe = (o, vis) => { const caps = capsDe(o, vis); return caps.length ? avanceCaps(caps) : pct(vis && vis.avance != null ? vis.avance : o.avance); };
-const capsList = (caps, resumen) => caps.length ? `<details class="caps"><summary>${esc(resumen)}</summary>${caps.map(c => { const v = pct(c.avance); return `<div class="cap"><div class="ct"><span class="cn">${esc(c.nombre)}</span><b>${v}%</b></div><div class="bar"><i class="${v >= 100 ? 'full' : ''}" style="width:${v}%"></i></div></div>`; }).join('')}</details>` : '';
+const capsList = (caps, resumen) => caps.length ? `<details class="caps"><summary>${esc(resumen)}</summary>${caps.map(c => { const v = pct(c.avance); return `<div class="cap"><div class="ct"><span class="cn">${esc(c.nombre)}</span><b>${v}%</b></div><div class="bar"><i class="${v >= 100 ? 'full' : ''}" style="width:${v}%"></i></div><div class="ap">aporta ${num1(aportaCap(c, caps))}% del total · peso ${num1(pct(c.peso) * 100 / (pesoTotal(caps) || 1))}%</div></div>`; }).join('')}</details>` : '';
 const progBar = (n, label = 'Avance de obra') => { const v = pct(n); return `<div class="prog${v >= 100 ? ' done' : ''}"><div class="lab"><span>${label}</span><span class="pv">${v}%</span></div><div class="bar"><i style="width:${v}%"></i></div></div>`; };
 const findVisita = (o, id) => o && o.visitas.find(v => v.id === id);
 const saveObra = async o => { o.updatedAt = Date.now(); await Store.putObra(o); };
@@ -687,7 +693,8 @@ function pintaAvanceHoja() {
   const a = S.avEdit; const o = findObra(a.obraId); const vis = a.visitaId ? findVisita(o, a.visitaId) : null;
   const cuerpo = a.caps.length
     ? `${a.caps.map((c, i) => { const v = pct(c.avance); return `<div class="capsl"><div class="ct"><span>${esc(c.nombre)}</span><b>${v}%</b></div>
-        <input type="range" class="rng" data-cap="${i}" min="0" max="100" step="5" value="${v}" aria-label="Ejecutado en ${esc(c.nombre)}"></div>`; }).join('')}
+        <input type="range" class="rng" data-cap="${i}" min="0" max="100" step="5" value="${v}" aria-label="Ejecutado en ${esc(c.nombre)}">
+        <div class="ap">aporta <b class="apv">${num1(aportaCap(c, a.caps))}</b>% del total</div></div>`; }).join('')}
       <p class="hint" style="margin:14px 4px 0">El total es la media de los capítulos según su peso. Los pesos se cambian en Ajustes de obra.</p>`
     : `<input type="range" class="rng" id="av-rng" min="0" max="100" step="1" value="${pct(a.valor)}" aria-label="Porcentaje de obra ejecutada">
       <div class="qpct">${[0, 25, 50, 75, 100].map(n => `<button type="button" data-act="avanceSet" data-v="${n}">${n}%</button>`).join('')}</div>
@@ -716,7 +723,11 @@ document.addEventListener('input', e => {
   if (t.id === 'q') { S.query = t.value; const main = $('main'); const tmp = document.createElement('div'); tmp.innerHTML = viewHome(); main.innerHTML = tmp.querySelector('main').innerHTML; return; }
   if (t.id === 'f-avance' && S.draft) { S.draft.avance = pct(t.value); const pv = $('#f-avance-prev'); if (pv) pv.innerHTML = progBar(S.draft.avance, 'Obra ejecutada'); return; }
   if (t.id === 'av-rng') { S.avEdit.valor = pct(t.value); pintaAvanceSheet(); return; }
-  if (t.dataset.cap != null && S.avEdit) { const c = S.avEdit.caps[+t.dataset.cap]; if (c) { c.avance = pct(t.value); const b = t.closest('.capsl').querySelector('b'); if (b) b.textContent = c.avance + '%'; pintaAvanceSheet(); } return; }
+  if (t.dataset.cap != null && S.avEdit) { const c = S.avEdit.caps[+t.dataset.cap]; if (c) {
+    c.avance = pct(t.value);
+    const b = t.closest('.capsl').querySelector('.ct b'); if (b) b.textContent = c.avance + '%';
+    document.querySelectorAll('.capsl .apv').forEach((el, i) => { el.textContent = num1(aportaCap(S.avEdit.caps[i], S.avEdit.caps)); });
+    pintaAvanceSheet(); } return; }
   if (t.dataset.cf && S.draft) { const i = +t.closest('.capedit').dataset.ci; const c = S.draft.capitulos[i];
     if (c) { c[t.dataset.cf] = t.dataset.cf === 'peso' ? pct(t.value) : t.value;
       const b = $('#f-pesos'); if (b) { const tot = pesoTotal(S.draft.capitulos); b.textContent = tot + '%'; b.style.color = tot === 100 ? 'var(--green)' : 'var(--amber-2)'; } }
@@ -923,24 +934,28 @@ function buildPDF(o, vis, perfil, tipo = 'acta') {
   const caps = capsDe(o, vis);
   if (caps.length) {
     seccion('AVANCE POR CAPÍTULOS DE EJECUCIÓN');
-    const cN = M, cP = M + 215, cE = M + 268, cB = M + 325, bw = W - 325;
+    const cN = M, xPeso = M + 250, xEjec = M + 315, xApor = M + 385, cB = M + 395, bw = W - 395;
     pdf.text('Capítulo', cN, y + 9, 8, { bold: true, color: C.grey });
-    pdf.text('Peso', cP + 34, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
-    pdf.text('Ejecutado', cE + 46, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
+    pdf.text('Peso', xPeso, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
+    pdf.text('Ejecutado', xEjec, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
+    pdf.text('Del total', xApor, y + 9, 8, { bold: true, color: C.grey, align: 'right' });
     y += 13;
     const pesoT = pesoTotal(caps) || 1;
     for (const c of caps) {
-      const nl = wrapText(c.nombre || '—', 205, 9.5, false), cv = pct(c.avance), pe = Math.round(pct(c.peso) * 1000 / pesoT) / 10;
+      const nl = wrapText(c.nombre || '—', 240, 9.5, false), cv = pct(c.avance);
+      const pe = num1(pct(c.peso) * 100 / pesoT), ap = num1(aportaCap(c, caps));
       const h = Math.max(nl.length, 1) * 12 + 5; ensure(h);
       nl.forEach((l, i) => pdf.text(l, cN, y + 9 + i * 12, 9.5, { color: C.ink }));
-      pdf.text(`${pe}%`, cP + 34, y + 9, 9.5, { color: C.grey, align: 'right' });
-      pdf.text(`${cv}%`, cE + 46, y + 9, 9.5, { bold: true, color: T.accent, align: 'right' });
+      pdf.text(`${pe}%`, xPeso, y + 9, 9.5, { color: C.grey, align: 'right' });
+      pdf.text(`${cv}%`, xEjec, y + 9, 9.5, { bold: true, color: T.accent, align: 'right' });
+      pdf.text(`${ap}%`, xApor, y + 9, 9.5, { color: C.ink, align: 'right' });
       pdf.rect(cB, y + 2.5, bw, 7, T.light, null); if (cv > 0) pdf.rect(cB, y + 2.5, bw * cv / 100, 7, T.accent2, null);
       y += h; pdf.line(M, y - 1, M + W, y - 1, C.line, .4);
     }
     ensure(24);
     pdf.text('TOTAL DE OBRA EJECUTADA', cN, y + 12, 9, { bold: true, color: T.accent });
-    pdf.text(`${av}%`, cE + 46, y + 12, 11, { bold: true, color: T.accent, align: 'right' });
+    pdf.text('100%', xPeso, y + 12, 9, { color: C.grey, align: 'right' });
+    pdf.text(`${av}%`, xApor, y + 12, 11, { bold: true, color: T.accent, align: 'right' });
     pdf.rect(cB, y + 5, bw, 8, T.light, null); if (av > 0) pdf.rect(cB, y + 5, bw * av / 100, 8, T.accent2, null);
     y += 26;
   }
@@ -1049,18 +1064,20 @@ function buildDOCX(o, vis, perfil, tipo = 'acta') {
   const caps = capsDe(o, vis);
   if (caps.length) {
     body.push(par(run('AVANCE POR CAPÍTULOS DE EJECUCIÓN', { b: true, sz: 9, color: BLUE }), { before: 280, after: 60, border: true }));
-    const wC = [4000, 1000, 1300, 3338], pesoT = pesoTotal(caps) || 1;
-    const barraCelda = v => { const hecho = Math.max(1, Math.round(wC[3] * v / 100)), resto = Math.max(1, wC[3] - hecho);
+    const wC = [3600, 900, 1250, 1150, 2738], pesoT = pesoTotal(caps) || 1, wBar = wC[4];
+    const barraCelda = v => { const hecho = Math.max(1, Math.round(wBar * v / 100)), resto = Math.max(1, wBar - hecho);
       const celdas = cell(par(run(' ', { sz: 4 }), { after: 0 }), hecho, { shade: T.hex2 }) + (v < 100 ? cell(par(run(' ', { sz: 4 }), { after: 0 }), resto, { shade: T.hexLight }) : '');
-      return `<w:tc><w:tcPr><w:tcW w:w="${wC[3]}" w:type="dxa"/></w:tcPr>${table([celdas], v < 100 ? [hecho, resto] : [wC[3]], false)}<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p></w:tc>`; };
-    const hd = ['Capítulo', 'Peso', 'Ejecutado', ''].map((t, i) => cell(par(run(t, { b: true, sz: 8, color: GREY }), { after: 0, align: i ? 'right' : null }), wC[i])).join('');
-    const filas = caps.map(c => { const v = pct(c.avance), pe = Math.round(pct(c.peso) * 1000 / pesoT) / 10;
+      return `<w:tc><w:tcPr><w:tcW w:w="${wBar}" w:type="dxa"/></w:tcPr>${table([celdas], v < 100 ? [hecho, resto] : [wBar], false)}<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p></w:tc>`; };
+    const hd = ['Capítulo', 'Peso', 'Ejecutado', 'Del total', ''].map((t, i) => cell(par(run(t, { b: true, sz: 8, color: GREY }), { after: 0, align: i ? 'right' : null }), wC[i])).join('');
+    const filas = caps.map(c => { const v = pct(c.avance), pe = num1(pct(c.peso) * 100 / pesoT), ap = num1(aportaCap(c, caps));
       return cell(par(run(c.nombre || '—', { sz: 10 }), { after: 0 }), wC[0])
         + cell(par(run(`${pe}%`, { sz: 10, color: GREY }), { after: 0, align: 'right' }), wC[1])
-        + cell(par(run(`${v}%`, { b: true, sz: 10, color: NAVY }), { after: 0, align: 'right' }), wC[2]) + barraCelda(v); });
+        + cell(par(run(`${v}%`, { b: true, sz: 10, color: NAVY }), { after: 0, align: 'right' }), wC[2])
+        + cell(par(run(`${ap}%`, { sz: 10 }), { after: 0, align: 'right' }), wC[3]) + barraCelda(v); });
     const total = cell(par(run('TOTAL DE OBRA EJECUTADA', { b: true, sz: 10, color: NAVY }), { after: 0 }), wC[0], { shade: T.hexBg })
-      + cell(par(run(' ', { sz: 8 }), { after: 0 }), wC[1], { shade: T.hexBg })
-      + cell(par(run(`${av}%`, { b: true, sz: 11, color: NAVY }), { after: 0, align: 'right' }), wC[2], { shade: T.hexBg }) + barraCelda(av);
+      + cell(par(run('100%', { sz: 10, color: GREY }), { after: 0, align: 'right' }), wC[1], { shade: T.hexBg })
+      + cell(par(run(' ', { sz: 8 }), { after: 0 }), wC[2], { shade: T.hexBg })
+      + cell(par(run(`${av}%`, { b: true, sz: 11, color: NAVY }), { after: 0, align: 'right' }), wC[3], { shade: T.hexBg }) + barraCelda(av);
     body.push(table([hd, ...filas, total], wC, true));
   }
   const ag = o.agentes.filter(a => a.nombre || a.telefono || a.email);

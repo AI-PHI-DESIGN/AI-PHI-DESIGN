@@ -19,7 +19,8 @@ Funciona en el móvil (Android e iPhone) y en el ordenador, sin instalar nada y 
   - **Avance de obra**: cada visita guarda el porcentaje de obra ejecutada en esa fecha (botón *Actualizar avance*, con
     deslizador y atajos 0/25/50/75/100 %). El último valor es el que muestra la obra en la lista.
     Si la obra tiene **capítulos de ejecución**, se puntúa cada capítulo y el total se calcula como media ponderada
-    por los pesos; el acta y el informe salen con la tabla de capítulos (peso, ejecutado y barra) y el total.
+    por los pesos; el acta y el informe salen con la tabla de capítulos (peso, ejecutado, lo que aporta al total y
+    barra) y la fila de total, que es la suma de las aportaciones.
 - **Emitir documento** (icono PDF en la visita): se elige el tipo y el formato.
   - Tipo **Acta de visita** (azul, con bloque de firmas de los agentes y texto legal) o **Informe de situación de obra** (verde).
   - Formato **PDF** o **Word (.docx)** editable. Ambos llevan el encabezado con el **logotipo**, datos de la empresa, título, **fecha**, obra y dirección; tabla de datos de obra; tabla de agentes con contacto; textos y fotos (en rejilla de dos columnas) con sus comentarios; pie con paginación.
